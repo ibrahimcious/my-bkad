@@ -6,6 +6,8 @@ import {
   createRootRoute,
 } from '@tanstack/react-router'
 
+import appCss from '@/styles/globals.css?url'
+
 export const Route = createRootRoute({
   head: () => ({
     meta: [
@@ -13,6 +15,7 @@ export const Route = createRootRoute({
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       { title: 'BKAD Pasuruan Dashboard' },
     ],
+    links: [{ rel: 'stylesheet', href: appCss }],
   }),
   component: RootComponent,
 })
