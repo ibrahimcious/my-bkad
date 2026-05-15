@@ -9,9 +9,26 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "prisma db seed",
+    "db:studio": "prisma studio",
+    "postinstall": "prisma generate"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "esbuild",
+      "prisma"
+    ]
   },
   "dependencies": {
+    "@prisma/client": "^5.22.0",
     "@tanstack/react-router": "^1.169.2",
     "@tanstack/react-start": "^1.167.65",
     "react": "^19.2.6",
@@ -21,6 +38,8 @@
     "@types/node": "^20.19.41",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "prisma": "^5.22.0",
+    "tsx": "^4.22.0",
     "typescript": "^5.9.3",
     "vite": "^8.0.13"
   }

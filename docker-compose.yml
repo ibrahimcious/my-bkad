@@ -1,0 +1,25 @@
+# Local development PostgreSQL.
+# Start with:  docker compose up postgres -d
+# The connection string lives in .env (DATABASE_URL); see .env.example.
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: bkad-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bkad
+      POSTGRES_PASSWORD: bkad_dev_password
+      POSTGRES_DB: bkad
+    ports:
+      - '5432:5432'
+    volumes:
+      - bkad-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U bkad -d bkad']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  bkad-postgres-data:
