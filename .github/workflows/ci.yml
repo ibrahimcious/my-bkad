@@ -28,6 +28,11 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: Build
+        # Generates src/routeTree.gen.ts (gitignored) so typecheck has
+        # the route tree, and verifies the production bundle compiles.
+        run: pnpm build
+
       - name: Typecheck
         run: pnpm typecheck
 
