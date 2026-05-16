@@ -3,6 +3,10 @@
 # --- Build stage ---------------------------------------------------------
 FROM node:20-slim AS builder
 WORKDIR /app
+# Prisma's engines need OpenSSL; node:20-slim does not ship it.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl \
+  && rm -rf /var/lib/apt/lists/*
 RUN corepack enable
 
 # Install dependencies first for layer caching. `prisma` is copied before
@@ -19,6 +23,10 @@ RUN pnpm build
 FROM node:20-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+# Prisma's query engine and `migrate deploy` need OpenSSL at runtime.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl \
+  && rm -rf /var/lib/apt/lists/*
 RUN corepack enable
 
 # node_modules from the builder already contains the generated Prisma
@@ -28,6 +36,9 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/server.js ./server.js
+# `prisma db seed` runs prisma/seed.ts with tsx, which imports the
+# argon2 password helper from src/ — so the source tree is needed too.
+COPY --from=builder /app/src ./src
 
 EXPOSE 3000
 

@@ -22,19 +22,21 @@ cd bkad-dashboard
 
 cp .env.production.example .env.production
 # Edit .env.production — set every blank value. In particular:
+#   (every `docker compose` command below passes --env-file .env.production
+#    so Compose reads these values; without it the stack fails to start.)
 #   POSTGRES_PASSWORD   strong random password
 #   DATABASE_URL        must embed the same password
 #   SESSION_PASSWORD    openssl rand -base64 32
 #   SEED_*_PASSWORD     strong passwords for the three accounts
 
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
 ```
 
 The app container runs `prisma migrate deploy` on startup, so the database
 schema is created automatically. Then seed the three user accounts:
 
 ```bash
-docker compose -f docker-compose.prod.yml exec app pnpm db:seed
+docker compose --env-file .env.production -f docker-compose.prod.yml exec app pnpm db:seed
 ```
 
 ## 3. Verify
@@ -43,8 +45,8 @@ docker compose -f docker-compose.prod.yml exec app pnpm db:seed
 # Health endpoint — expect HTTP 200
 curl -i http://<vps-ip>/healthz
 
-docker compose -f docker-compose.prod.yml ps      # all services Up
-docker compose -f docker-compose.prod.yml logs app
+docker compose --env-file .env.production -f docker-compose.prod.yml ps      # all services Up
+docker compose --env-file .env.production -f docker-compose.prod.yml logs app
 ```
 
 Open `http://<vps-ip>/` in a browser, sign in as the Kepala account, and
@@ -88,14 +90,14 @@ To add TLS once the domain resolves to the VPS:
        }
    }
    ```
-3. Reload nginx: `docker compose -f docker-compose.prod.yml restart nginx`.
+3. Reload nginx: `docker compose --env-file .env.production -f docker-compose.prod.yml restart nginx`.
 4. Renew certificates periodically (`certbot renew`) — schedule via cron.
 
 ## 5. Deploying an update
 
 ```bash
 git pull
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
 ```
 
 Pending migrations apply automatically on container start. Watch the logs
@@ -105,7 +107,7 @@ and re-check `/healthz` afterwards.
 
 ```bash
 git checkout <previous-tag-or-commit>
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
 ```
 
 Note: a rollback does **not** revert database migrations. If a release
@@ -117,7 +119,7 @@ The budget data can always be rebuilt by re-uploading the LRA file, but
 back up the database regularly for the user accounts and upload history:
 
 ```bash
-docker compose -f docker-compose.prod.yml exec postgres \
+docker compose --env-file .env.production -f docker-compose.prod.yml exec postgres \
   pg_dump -U bkad bkad > backup-$(date +%F).sql
 ```
 
