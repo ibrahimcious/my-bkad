@@ -4,6 +4,7 @@ import {
   type BudgetAmounts,
   type BudgetLineAggregate,
   breakdownByKelompok,
+  groupRealisasiBySubBidang,
   rankPrograms,
   serapanPercent,
   summarizeBudget,
@@ -138,6 +139,48 @@ describe('rankPrograms', () => {
       byAnggaran: [],
       highestSerapan: [],
       lowestSerapan: [],
+    })
+  })
+})
+
+describe('groupRealisasiBySubBidang', () => {
+  // Each line carries the `unsur` amounts: anggaran 1000, realisasi 480.
+  const lines = [
+    { kode: 'A', amounts: unsur },
+    { kode: 'B', amounts: unsur },
+    { kode: 'C', amounts: unsur },
+  ]
+
+  it('sums Sub Kegiatan totals per Sub Bidang', () => {
+    const mapping = new Map([
+      ['A', 'Sungram'],
+      ['B', 'Sungram'],
+      ['C', 'Anggaran'],
+    ])
+    const result = groupRealisasiBySubBidang(lines, mapping)
+    expect(result.map((r) => r.subBidang)).toEqual(['Sungram', 'Anggaran'])
+    expect(result[0]).toEqual({
+      subBidang: 'Sungram',
+      totalAnggaran: 2000,
+      totalRealisasi: 960,
+      persentaseSerapan: 48,
+    })
+  })
+
+  it('collects unmapped Sub Kegiatan under "Belum ditetapkan", sorted last', () => {
+    const mapping = new Map([['A', 'Sungram']])
+    const result = groupRealisasiBySubBidang(lines, mapping)
+    expect(result.map((r) => r.subBidang)).toEqual([
+      'Sungram',
+      'Belum ditetapkan',
+    ])
+    expect(result[0]).toMatchObject({
+      subBidang: 'Sungram',
+      totalAnggaran: 1000,
+    })
+    expect(result.at(-1)).toMatchObject({
+      subBidang: 'Belum ditetapkan',
+      totalAnggaran: 2000,
     })
   })
 })

@@ -9,14 +9,22 @@ export { getBudgetSummary } from './server/aggregate-summary'
 export { getBudgetByKelompok } from './server/aggregate-by-kelompok'
 export { getTopPrograms } from './server/aggregate-top-programs'
 export { getSubKegiatanLines } from './server/aggregate-sub-kegiatan'
+export { getRealisasiBySubBidang } from './server/aggregate-sub-bidang'
+export {
+  uploadSubBidangMapping,
+  getSubBidangMapping,
+  type SubBidangUploadResult,
+} from './server/upload-subbidang'
 export type {
   BudgetSummary,
   KelompokBelanjaBreakdown,
   BudgetLineAggregate,
   TopPrograms,
+  SubBidangAggregate,
 } from './server/aggregations'
 
 export { SummaryCards } from './components/SummaryCards'
 export { KelompokBelanjaChart } from './components/KelompokBelanjaChart'
 export { SerapanRanking } from './components/SerapanRanking'
 export { BudgetLineTable } from './components/BudgetLineTable'
+export { SubBidangTable } from './components/SubBidangTable'

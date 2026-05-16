@@ -18,15 +18,20 @@ Prisma models (see `prisma/schema.prisma`), all prefixed `Budget`:
   Realisasi amount for all four Kelompok Belanja (Operasi, Modal, Tak
   Terduga, Transfer).
 - `BudgetUploadHistory` — audit record of every upload attempt.
+- `BudgetSubBidangMapping` — maps each Sub Kegiatan to a Sub Bidang (U7).
+  Reference data, keyed by the stable `subKegiatanKode`, so it survives
+  the `BudgetRealization` full refresh.
 
-Each upload is a full refresh: the prior dataset is deleted and replaced,
-inside a single transaction (see `server/upload-lra.ts`).
+Each LRA upload is a full refresh: the prior dataset is deleted and
+replaced, inside a single transaction (see `server/upload-lra.ts`). The
+Sub Bidang mapping is uploaded and refreshed separately.
 
 ## Public API
 
-Consumers import only from `src/modules/budget/index.ts` — currently
-`uploadLRA` and `getUploadHistory`. Internal files (`server/`,
-`components/`) are private to the module.
+Consumers import only from `src/modules/budget/index.ts` — server
+functions for upload, aggregation, and the Sub Bidang mapping, plus the
+dashboard components. Internal files (`server/`, `components/`) are
+private to the module.
 
 This module **must not import from other modules** (`employee`, `asset`)
 or from `routes/`. Shared code belongs in `src/shared/`. The boundary is
@@ -91,14 +96,23 @@ KEGIATAN → PROGRAM, SUB_KEGIATAN → KEGIATAN, REKENING → SUB_KEGIATAN.
 - A row with a code in an unexpected column/depth is skipped with a
   warning (surfaced in upload history and logs), and parsing continues.
 
+## Sub Bidang mapping (U7)
+
+Each Sub Kegiatan can be attributed to a BKAD **Sub Bidang** so the
+dashboard can show realisation per Sub Bidang. The mapping is *reference
+data* — it does not change between LRA uploads — so it is not part of the
+LRA file. It is uploaded separately on `/admin/sub-bidang` from a mapping
+spreadsheet (see `docs/samples/subbidang.xlsx`: columns C / D / E hold the
+Sub Kegiatan code, Bidang, and Sub Bidang). The file is denormalised and
+is deduplicated by `kode` on import.
+
+The mapping is stored in `BudgetSubBidangMapping`, keyed by the stable
+`subKegiatanKode`, so it survives every LRA full refresh. The dashboard
+joins Sub Kegiatan rows to it by `kode`; any Sub Kegiatan with no mapping
+rolls up under "Belum ditetapkan".
+
 ## Status
 
-Implemented:
-
-- LRA parser — header/level detection, hierarchical `kode` (U3)
-- Upload pipeline — parse → validate → full refresh → record history (U3)
-
-Not yet implemented:
-
-- Aggregation server functions (U4)
-- Dashboard components (U5)
+All of v1 plus U7 is implemented: LRA parser and upload pipeline (U3),
+aggregation server functions (U4), dashboard UI (U5), and the Sub Bidang
+mapping and per-Sub-Bidang view (U7).

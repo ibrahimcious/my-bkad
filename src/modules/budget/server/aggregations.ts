@@ -189,3 +189,49 @@ export function rankPrograms(programs: BudgetLineAggregate[]): TopPrograms {
     lowestSerapan: bySerapanDesc.slice(-SERAPAN_RANK_SIZE).reverse(),
   }
 }
+
+// --- Sub Bidang grouping -------------------------------------------------
+
+export interface SubBidangAggregate {
+  subBidang: string
+  totalAnggaran: number
+  totalRealisasi: number
+  persentaseSerapan: number
+}
+
+/** Label for Sub Kegiatan that have no Sub Bidang mapping yet. */
+export const UNMAPPED_SUB_BIDANG = 'Belum ditetapkan'
+
+/**
+ * Group Sub Kegiatan realisation by Sub Bidang. `mapping` resolves a
+ * Sub Kegiatan `kode` to its Sub Bidang; unmapped Sub Kegiatan are
+ * collected under {@link UNMAPPED_SUB_BIDANG}. The result is sorted by
+ * total Anggaran, with the unmapped group always last.
+ */
+export function groupRealisasiBySubBidang(
+  subKegiatan: { kode: string; amounts: BudgetAmounts }[],
+  mapping: Map<string, string>,
+): SubBidangAggregate[] {
+  const totals = new Map<string, { anggaran: number; realisasi: number }>()
+
+  for (const { kode, amounts } of subKegiatan) {
+    const subBidang = mapping.get(kode) ?? UNMAPPED_SUB_BIDANG
+    const acc = totals.get(subBidang) ?? { anggaran: 0, realisasi: 0 }
+    acc.anggaran += totalAnggaran(amounts)
+    acc.realisasi += totalRealisasi(amounts)
+    totals.set(subBidang, acc)
+  }
+
+  return [...totals.entries()]
+    .map(([subBidang, { anggaran, realisasi }]) => ({
+      subBidang,
+      totalAnggaran: anggaran,
+      totalRealisasi: realisasi,
+      persentaseSerapan: serapanPercent(anggaran, realisasi),
+    }))
+    .sort((a, b) => {
+      if (a.subBidang === UNMAPPED_SUB_BIDANG) return 1
+      if (b.subBidang === UNMAPPED_SUB_BIDANG) return -1
+      return b.totalAnggaran - a.totalAnggaran
+    })
+}
