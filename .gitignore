@@ -1,0 +1,27 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+.output
+.nitro
+.tanstack
+.vite
+
+# Generated route tree (created by the TanStack Start plugin)
+src/routeTree.gen.ts
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Editor / OS
+.DS_Store
+.idea
+.vscode

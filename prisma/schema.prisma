@@ -1,0 +1,95 @@
+// BKAD Pasuruan Dashboard — database schema.
+// Schema changes go through Prisma migrations (see prisma/migrations/).
+// Models are namespaced by module: budget models are prefixed `Budget*`.
+// Employee and asset models are added in v1.1 / v1.2.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Shared: users & access ---------------------------------------------
+
+/// Role determines access. KEPALA and SEKRETARIS view the dashboard;
+/// UPLOADER additionally reaches the /admin/* upload routes.
+enum UserRole {
+  KEPALA
+  SEKRETARIS
+  UPLOADER
+}
+
+/// Application user. v1 has no self-registration — the three accounts
+/// are created by prisma/seed.ts. Real password hashing (argon2id) is
+/// wired up in U2; until then `passwordHash` holds a placeholder.
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  role         UserRole
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// --- Budget module (v1) -------------------------------------------------
+
+/// Hierarchy level of an LRA row, derived from the `kode` structure.
+/// The exact set of levels is confirmed against the real LRA sample
+/// in U3.
+enum BudgetLevel {
+  UNSUR
+  PROGRAM
+  KEGIATAN
+  SUB_KEGIATAN
+  REKENING
+}
+
+/// Outcome of an LRA upload attempt.
+enum UploadStatus {
+  SUCCESS
+  FAILED
+}
+
+/// One row parsed from an LRA Excel export. The full hierarchy is
+/// stored (every level), linked by `parentKode`. Each upload performs
+/// a full refresh: prior rows are deleted and the new set inserted.
+/// The column shape is finalized in U3 against the real LRA sample.
+model BudgetRealization {
+  id         String      @id @default(cuid())
+  kode       String
+  parentKode String?
+  level      BudgetLevel
+  uraian     String
+
+  anggaranOperasi     Decimal @default(0) @db.Decimal(18, 2)
+  realisasiOperasi    Decimal @default(0) @db.Decimal(18, 2)
+  anggaranModal       Decimal @default(0) @db.Decimal(18, 2)
+  realisasiModal      Decimal @default(0) @db.Decimal(18, 2)
+  anggaranTakTerduga  Decimal @default(0) @db.Decimal(18, 2)
+  realisasiTakTerduga Decimal @default(0) @db.Decimal(18, 2)
+  anggaranTransfer    Decimal @default(0) @db.Decimal(18, 2)
+  realisasiTransfer   Decimal @default(0) @db.Decimal(18, 2)
+
+  createdAt DateTime @default(now())
+
+  @@index([level])
+  @@index([parentKode])
+}
+
+/// Audit record of every LRA upload attempt — successful or failed.
+/// `getUploadHistory` (U3) reads this; the dashboard's "Terakhir
+/// diperbarui" timestamp (U4) comes from the latest SUCCESS row.
+model BudgetUploadHistory {
+  id         String       @id @default(cuid())
+  fileName   String
+  rowCount   Int          @default(0)
+  status     UploadStatus
+  message    String?
+  uploadedAt DateTime     @default(now())
+
+  @@index([uploadedAt])
+}
