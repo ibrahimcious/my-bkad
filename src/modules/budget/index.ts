@@ -14,3 +14,8 @@ export type {
   ProgramAggregate,
   TopPrograms,
 } from './server/aggregations'
+
+export { SummaryCards } from './components/SummaryCards'
+export { KelompokBelanjaChart } from './components/KelompokBelanjaChart'
+export { SerapanRanking } from './components/SerapanRanking'
+export { TopProgramsTable } from './components/TopProgramsTable'
