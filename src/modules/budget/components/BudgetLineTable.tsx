@@ -40,14 +40,16 @@ export function BudgetLineTable({ title, nameLabel, lines }: BudgetLineTableProp
   }
 
   return (
-    <div className="rounded-lg border bg-card p-5">
-      <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
+    <div className="rounded-card border border-fog bg-snow p-6">
+      <h2 className="text-sm font-semibold tracking-tight text-obsidian">
+        {title}
+      </h2>
       {lines.length === 0 ? (
-        <p className="mt-4 text-sm text-muted-foreground">Tidak ada data.</p>
+        <p className="mt-4 text-sm text-steel">Tidak ada data.</p>
       ) : (
         <table className="mt-4 w-full border-collapse text-sm">
           <thead>
-            <tr className="border-b text-left text-muted-foreground">
+            <tr className="border-b border-fog text-left text-steel">
               <th className="py-2 pr-4 font-medium">Kode</th>
               <th className="py-2 pr-4 font-medium">{nameLabel}</th>
               {NUMERIC_COLUMNS.map((column) => (
@@ -55,7 +57,7 @@ export function BudgetLineTable({ title, nameLabel, lines }: BudgetLineTableProp
                   <button
                     type="button"
                     onClick={() => toggleSort(column.key)}
-                    className="hover:text-foreground"
+                    className="transition-colors hover:text-obsidian"
                   >
                     {column.label}
                     {sortKey === column.key
@@ -70,16 +72,16 @@ export function BudgetLineTable({ title, nameLabel, lines }: BudgetLineTableProp
           </thead>
           <tbody>
             {sorted.map((line) => (
-              <tr key={line.kode} className="border-b">
-                <td className="py-2 pr-4 tabular-nums">{line.kode}</td>
-                <td className="py-2 pr-4">{line.uraian}</td>
-                <td className="py-2 pl-4 text-right tabular-nums">
+              <tr key={line.kode} className="border-b border-fog">
+                <td className="py-2 pr-4 tabular-nums text-steel">{line.kode}</td>
+                <td className="py-2 pr-4 text-ink">{line.uraian}</td>
+                <td className="py-2 pl-4 text-right tabular-nums text-ink">
                   {formatIDR(line.totalAnggaran)}
                 </td>
-                <td className="py-2 pl-4 text-right tabular-nums">
+                <td className="py-2 pl-4 text-right tabular-nums text-ink">
                   {formatIDR(line.totalRealisasi)}
                 </td>
-                <td className="py-2 pl-4 text-right tabular-nums">
+                <td className="py-2 pl-4 text-right font-medium tabular-nums text-obsidian">
                   {line.persentaseSerapan.toFixed(2)}%
                 </td>
               </tr>
