@@ -1,31 +1,34 @@
 import { createFileRoute } from '@tanstack/react-router'
 
 import {
+  BudgetLineTable,
   KelompokBelanjaChart,
   SerapanRanking,
   SummaryCards,
-  TopProgramsTable,
   getBudgetByKelompok,
   getBudgetSummary,
+  getSubKegiatanLines,
   getTopPrograms,
 } from '@/modules/budget'
 import { formatDateID } from '@/shared/lib/format'
 
 export const Route = createFileRoute('/dashboard/')({
   loader: async () => {
-    const [summary, byKelompok, topPrograms] = await Promise.all([
+    const [summary, byKelompok, topPrograms, subKegiatan] = await Promise.all([
       getBudgetSummary(),
       getBudgetByKelompok(),
       getTopPrograms(),
+      getSubKegiatanLines(),
     ])
-    return { summary, byKelompok, topPrograms }
+    return { summary, byKelompok, topPrograms, subKegiatan }
   },
   component: DashboardPage,
   pendingComponent: DashboardPending,
 })
 
 function DashboardPage() {
-  const { summary, byKelompok, topPrograms } = Route.useLoaderData()
+  const { summary, byKelompok, topPrograms, subKegiatan } =
+    Route.useLoaderData()
 
   // A null timestamp means no LRA has been uploaded yet.
   if (summary.lastUpdatedAt === null) {
@@ -64,7 +67,17 @@ function DashboardPage() {
         </div>
       </div>
 
-      <TopProgramsTable programs={topPrograms.byAnggaran} />
+      <BudgetLineTable
+        title="Program dengan Anggaran Terbesar"
+        nameLabel="Program"
+        lines={topPrograms.byAnggaran}
+      />
+
+      <BudgetLineTable
+        title="Rincian Anggaran dan Realisasi per Sub Kegiatan"
+        nameLabel="Sub Kegiatan"
+        lines={subKegiatan}
+      />
     </div>
   )
 }
@@ -83,6 +96,7 @@ function DashboardPending() {
         <div className="h-80 animate-pulse rounded-lg bg-muted lg:col-span-2" />
       </div>
       <div className="h-64 animate-pulse rounded-lg bg-muted" />
+      <div className="h-96 animate-pulse rounded-lg bg-muted" />
     </div>
   )
 }

@@ -8,14 +8,15 @@ export { getUploadHistory } from './server/upload-history'
 export { getBudgetSummary } from './server/aggregate-summary'
 export { getBudgetByKelompok } from './server/aggregate-by-kelompok'
 export { getTopPrograms } from './server/aggregate-top-programs'
+export { getSubKegiatanLines } from './server/aggregate-sub-kegiatan'
 export type {
   BudgetSummary,
   KelompokBelanjaBreakdown,
-  ProgramAggregate,
+  BudgetLineAggregate,
   TopPrograms,
 } from './server/aggregations'
 
 export { SummaryCards } from './components/SummaryCards'
 export { KelompokBelanjaChart } from './components/KelompokBelanjaChart'
 export { SerapanRanking } from './components/SerapanRanking'
-export { TopProgramsTable } from './components/TopProgramsTable'
+export { BudgetLineTable } from './components/BudgetLineTable'

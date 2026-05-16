@@ -1,8 +1,8 @@
-import type { ProgramAggregate } from '../server/aggregations'
+import type { BudgetLineAggregate } from '../server/aggregations'
 
 interface SerapanRankingProps {
-  highest: ProgramAggregate[]
-  lowest: ProgramAggregate[]
+  highest: BudgetLineAggregate[]
+  lowest: BudgetLineAggregate[]
 }
 
 function RankingList({
@@ -10,7 +10,7 @@ function RankingList({
   programs,
 }: {
   title: string
-  programs: ProgramAggregate[]
+  programs: BudgetLineAggregate[]
 }) {
   return (
     <div>
