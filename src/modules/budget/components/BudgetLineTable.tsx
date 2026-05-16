@@ -2,10 +2,14 @@ import { useState } from 'react'
 
 import { formatIDR } from '@/shared/lib/format'
 
-import type { ProgramAggregate } from '../server/aggregations'
+import type { BudgetLineAggregate } from '../server/aggregations'
 
-interface TopProgramsTableProps {
-  programs: ProgramAggregate[]
+interface BudgetLineTableProps {
+  /** Heading shown above the table. */
+  title: string
+  /** Header label for the description column (e.g. "Program"). */
+  nameLabel: string
+  lines: BudgetLineAggregate[]
 }
 
 type SortKey = 'totalAnggaran' | 'totalRealisasi' | 'persentaseSerapan'
@@ -16,12 +20,12 @@ const NUMERIC_COLUMNS: { key: SortKey; label: string }[] = [
   { key: 'persentaseSerapan', label: 'Serapan' },
 ]
 
-/** Table of top programs by Anggaran; the numeric columns are sortable. */
-export function TopProgramsTable({ programs }: TopProgramsTableProps) {
+/** A sortable table of budget lines (programs, sub kegiatan, etc.). */
+export function BudgetLineTable({ title, nameLabel, lines }: BudgetLineTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('totalAnggaran')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
-  const sorted = [...programs].sort((a, b) => {
+  const sorted = [...lines].sort((a, b) => {
     const diff = a[sortKey] - b[sortKey]
     return sortDir === 'asc' ? diff : -diff
   })
@@ -37,19 +41,15 @@ export function TopProgramsTable({ programs }: TopProgramsTableProps) {
 
   return (
     <div className="rounded-lg border bg-card p-5">
-      <h2 className="text-sm font-semibold tracking-tight">
-        Program dengan Anggaran Terbesar
-      </h2>
-      {programs.length === 0 ? (
-        <p className="mt-4 text-sm text-muted-foreground">
-          Tidak ada data program.
-        </p>
+      <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
+      {lines.length === 0 ? (
+        <p className="mt-4 text-sm text-muted-foreground">Tidak ada data.</p>
       ) : (
         <table className="mt-4 w-full border-collapse text-sm">
           <thead>
             <tr className="border-b text-left text-muted-foreground">
               <th className="py-2 pr-4 font-medium">Kode</th>
-              <th className="py-2 pr-4 font-medium">Program</th>
+              <th className="py-2 pr-4 font-medium">{nameLabel}</th>
               {NUMERIC_COLUMNS.map((column) => (
                 <th key={column.key} className="py-2 pl-4 text-right font-medium">
                   <button
@@ -69,18 +69,18 @@ export function TopProgramsTable({ programs }: TopProgramsTableProps) {
             </tr>
           </thead>
           <tbody>
-            {sorted.map((program) => (
-              <tr key={program.kode} className="border-b">
-                <td className="py-2 pr-4 tabular-nums">{program.kode}</td>
-                <td className="py-2 pr-4">{program.uraian}</td>
+            {sorted.map((line) => (
+              <tr key={line.kode} className="border-b">
+                <td className="py-2 pr-4 tabular-nums">{line.kode}</td>
+                <td className="py-2 pr-4">{line.uraian}</td>
                 <td className="py-2 pl-4 text-right tabular-nums">
-                  {formatIDR(program.totalAnggaran)}
+                  {formatIDR(line.totalAnggaran)}
                 </td>
                 <td className="py-2 pl-4 text-right tabular-nums">
-                  {formatIDR(program.totalRealisasi)}
+                  {formatIDR(line.totalRealisasi)}
                 </td>
                 <td className="py-2 pl-4 text-right tabular-nums">
-                  {program.persentaseSerapan.toFixed(2)}%
+                  {line.persentaseSerapan.toFixed(2)}%
                 </td>
               </tr>
             ))}

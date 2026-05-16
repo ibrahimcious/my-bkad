@@ -3,13 +3,10 @@ import { createServerFn } from '@tanstack/react-start'
 import { prisma } from '@/shared/db'
 
 import {
-  type ProgramAggregate,
   type TopPrograms,
   rankPrograms,
-  serapanPercent,
   toBudgetAmounts,
-  totalAnggaran,
-  totalRealisasi,
+  toBudgetLine,
 } from './aggregations'
 
 /**
@@ -22,20 +19,9 @@ export const getTopPrograms = createServerFn({ method: 'GET' }).handler(
     const rows = await prisma.budgetRealization.findMany({
       where: { level: 'PROGRAM' },
     })
-
-    const programs: ProgramAggregate[] = rows.map((row) => {
-      const amounts = toBudgetAmounts(row)
-      const anggaran = totalAnggaran(amounts)
-      const realisasi = totalRealisasi(amounts)
-      return {
-        kode: row.kode,
-        uraian: row.uraian,
-        totalAnggaran: anggaran,
-        totalRealisasi: realisasi,
-        persentaseSerapan: serapanPercent(anggaran, realisasi),
-      }
-    })
-
+    const programs = rows.map((row) =>
+      toBudgetLine(row.kode, row.uraian, toBudgetAmounts(row)),
+    )
     return rankPrograms(programs)
   },
 )

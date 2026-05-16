@@ -2,11 +2,12 @@ import { describe, expect, it } from 'vitest'
 
 import {
   type BudgetAmounts,
-  type ProgramAggregate,
+  type BudgetLineAggregate,
   breakdownByKelompok,
   rankPrograms,
   serapanPercent,
   summarizeBudget,
+  toBudgetLine,
 } from '@/modules/budget/server/aggregations'
 
 // UNSUR fixture: totalAnggaran 1000, totalRealisasi 480 (48% serapan).
@@ -25,7 +26,7 @@ function program(
   kode: string,
   totalAnggaran: number,
   persentaseSerapan: number,
-): ProgramAggregate {
+): BudgetLineAggregate {
   return {
     kode,
     uraian: `Program ${kode}`,
@@ -42,6 +43,18 @@ describe('serapanPercent', () => {
 
   it('returns 0 — not NaN — when there is no budget', () => {
     expect(serapanPercent(0, 0)).toBe(0)
+  })
+})
+
+describe('toBudgetLine', () => {
+  it('rolls a row up to its Anggaran/Realisasi totals and serapan', () => {
+    expect(toBudgetLine('5.02.01', 'Program A', unsur)).toEqual({
+      kode: '5.02.01',
+      uraian: 'Program A',
+      totalAnggaran: 1000,
+      totalRealisasi: 480,
+      persentaseSerapan: 48,
+    })
   })
 })
 

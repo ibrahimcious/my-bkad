@@ -107,6 +107,7 @@ src/
 **Dashboard view**
 - **R5.** Kepala and Sekretaris can sign in via email + password.
 - **R6.** Dashboard shows: total Anggaran, total Realisasi, % serapan, breakdown by Kelompok Belanja (Operasi / Modal / Tak Terduga / Transfer), top 10 Program by anggaran, top/bottom 5 Program by % serapan. Fits a 1440px screen without scroll.
+  - **R6a (added after U6).** Dashboard also shows a sortable detail table of every Sub Kegiatan with its Anggaran, Realisasi, and % serapan. This is a section below the summary, so the dashboard now scrolls — it relaxes the "without scroll" constraint of R6 for this section only.
 - **R7.** Dashboard shows a "Terakhir diperbarui" timestamp tied to the latest budget upload.
 - **R8.** Dashboard initial load completes in under 3 seconds.
 

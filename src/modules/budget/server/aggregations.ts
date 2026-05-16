@@ -131,9 +131,10 @@ export function breakdownByKelompok(
   }))
 }
 
-// --- Program rankings ----------------------------------------------------
+// --- Budget lines --------------------------------------------------------
 
-export interface ProgramAggregate {
+/** A budget row at any hierarchy level, rolled up to its totals. */
+export interface BudgetLineAggregate {
   kode: string
   uraian: string
   totalAnggaran: number
@@ -141,20 +142,39 @@ export interface ProgramAggregate {
   persentaseSerapan: number
 }
 
+/** Roll a budget row's amounts up into a {@link BudgetLineAggregate}. */
+export function toBudgetLine(
+  kode: string,
+  uraian: string,
+  amounts: BudgetAmounts,
+): BudgetLineAggregate {
+  const anggaran = totalAnggaran(amounts)
+  const realisasi = totalRealisasi(amounts)
+  return {
+    kode,
+    uraian,
+    totalAnggaran: anggaran,
+    totalRealisasi: realisasi,
+    persentaseSerapan: serapanPercent(anggaran, realisasi),
+  }
+}
+
+// --- Program rankings ----------------------------------------------------
+
 export interface TopPrograms {
   /** Top 10 programs by total Anggaran, highest first. */
-  byAnggaran: ProgramAggregate[]
+  byAnggaran: BudgetLineAggregate[]
   /** Top 5 programs by % serapan, highest first. */
-  highestSerapan: ProgramAggregate[]
+  highestSerapan: BudgetLineAggregate[]
   /** Bottom 5 programs by % serapan, lowest first. */
-  lowestSerapan: ProgramAggregate[]
+  lowestSerapan: BudgetLineAggregate[]
 }
 
 const TOP_BY_ANGGARAN = 10
 const SERAPAN_RANK_SIZE = 5
 
 /** Rank programs by total Anggaran and by % serapan. */
-export function rankPrograms(programs: ProgramAggregate[]): TopPrograms {
+export function rankPrograms(programs: BudgetLineAggregate[]): TopPrograms {
   const byAnggaran = [...programs]
     .sort((a, b) => b.totalAnggaran - a.totalAnggaran)
     .slice(0, TOP_BY_ANGGARAN)
