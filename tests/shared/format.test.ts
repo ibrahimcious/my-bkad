@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatDateID, formatIDR } from '@/shared/lib/format'
+import { formatDateID, formatIDR, formatIDRCompact } from '@/shared/lib/format'
 
 // Intl separates the "Rp" symbol from the amount with a non-breaking
 // space (U+00A0), not a regular space — assertions must match it.
@@ -13,6 +13,19 @@ describe('formatIDR', () => {
 
   it('formats zero without fraction digits', () => {
     expect(formatIDR(0)).toBe(`Rp${NBSP}0`)
+  })
+})
+
+describe('formatIDRCompact', () => {
+  // Normalise NBSP and other Intl spacing to a regular space.
+  const normalise = (s: string) => s.replace(/\s/g, ' ')
+
+  it('formats a large figure with an Indonesian compact suffix', () => {
+    expect(normalise(formatIDRCompact(668220378293))).toBe('Rp 668,2 M')
+  })
+
+  it('formats zero without a suffix', () => {
+    expect(normalise(formatIDRCompact(0))).toBe('Rp 0')
   })
 })
 
