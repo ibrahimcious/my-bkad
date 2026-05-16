@@ -59,4 +59,17 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   ...moduleBoundaryConfigs,
+  {
+    // The production server entry is a plain Node ESM script — give it
+    // the Node and Web globals it relies on.
+    files: ['server.js'],
+    languageOptions: {
+      globals: {
+        process: 'readonly',
+        console: 'readonly',
+        URL: 'readonly',
+        Response: 'readonly',
+      },
+    },
+  },
 )
