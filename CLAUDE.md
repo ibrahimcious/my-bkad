@@ -4,7 +4,7 @@ Internal dashboard for the Head and Secretary of BKAD (Badan Keuangan dan Aset D
 
 ## Status
 
-v1 in development. Scope is **budget data only** (LRA from SIPD Penatausahaan). Employee and asset modules will be added as v1.1 and v1.2 once sample data is available from Sub Bagian Umum dan Kepegawaian and Bagian Pengelolaan BMD.
+v1 development complete — all six units (U1–U6) are merged to `main`. Scope is **budget data only** (LRA from SIPD Penatausahaan): authentication, LRA upload pipeline, aggregation, dashboard UI, and the production deployment artifacts are all in place. Production deployment to the VPS and user testing remain as operational steps (see `docs/deploy.md`). Employee and asset modules will be added as v1.1 and v1.2 once sample data is available from Sub Bagian Umum dan Kepegawaian and Bagian Pengelolaan BMD.
 
 ## Users
 
