@@ -93,3 +93,17 @@ model BudgetUploadHistory {
 
   @@index([uploadedAt])
 }
+
+/// Maps each Sub Kegiatan to the BKAD Sub Bidang that owns it (U7).
+/// Reference data, maintained separately from the LRA: keyed by the
+/// stable `subKegiatanKode`, it survives the BudgetRealization full
+/// refresh. Each upload of the mapping file replaces this table.
+model BudgetSubBidangMapping {
+  id              String   @id @default(cuid())
+  subKegiatanKode String   @unique
+  bidang          String
+  subBidang       String
+  createdAt       DateTime @default(now())
+
+  @@index([subBidang])
+}

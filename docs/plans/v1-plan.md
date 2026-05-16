@@ -119,6 +119,10 @@ src/
 - **R11.** Service exposes `/healthz` returning 200 when the database is reachable.
 - **R12.** Application errors logged with timestamp, route, and stack; sensitive data is not logged.
 
+**Sub Bidang attribution (added after U6 — see "Plan revisions")**
+- **R13.** Each Sub Kegiatan can be attributed to a Sub Bidang through a mapping uploaded separately from the LRA — the SIPD LRA export is never edited. The mapping is keyed by Sub Kegiatan `kode` so it survives every LRA full-refresh; uploading the mapping replaces it wholesale.
+- **R14.** Dashboard shows total Anggaran, Realisasi, and % serapan grouped by Sub Bidang. Sub Kegiatan with no mapping are grouped under "Belum ditetapkan".
+
 ## Key Technical Decisions
 
 - **TanStack Start full-stack** — UI and server functions in one app. No separate API service for a small-user dashboard.
@@ -153,7 +157,17 @@ src/
 
 ## Implementation Units
 
-Six units across four weeks. Solo, sequential, each a PR to `main`.
+Six units (U1–U6) across four weeks, solo, sequential, each a PR to `main`. U7 was added afterward — see "Plan revisions" below.
+
+### Plan revisions
+
+Recorded so the plan stays honest about what actually shipped. The following were added *after* the original six-unit plan — each discovered during development, validated, and shipped as its own PR:
+
+- **R6a** — a Sub Kegiatan detail table on the dashboard.
+- **Dashboard restyle** — the `/dashboard` subtree was restyled per `DESIGN.md` (an adapted "Awesomic" theme: DM Sans, neutral palette, rounded surfaces). UI only; the rest of the app keeps its original styling.
+- **U7 — Sub Bidang attribution** (R13, R14) — see the unit below.
+
+This is normal evolution, not the scope creep the Risk Analysis warns against: each item was a real requirement caught *before* launch, isolated to its own PR, and absorbed by the existing module architecture without reworking U1–U6.
 
 ### U1. Scaffolding, shared tooling, module structure (Days 1–4)
 - **Goal:** Stand up the TanStack Start project, Postgres via Docker Compose, Prisma schema for the budget module, ESLint with cross-module import rule, seed script for three users.
@@ -253,6 +267,24 @@ Six units across four weeks. Solo, sequential, each a PR to `main`.
 - **Approach:** VPS choices to evaluate at U6 start: Niagahoster Cloud VPS, IDCloudHost, Biznet Gio. Pick based on price and Postgres support. Deploy via Docker Compose for simplicity (no Kubernetes). HTTPS via Let's Encrypt + nginx. Sentry free tier for error tracking (or GlitchTip self-hosted alongside the app if data sensitivity rules out external services — confirm with BKAD IT).
 - **Test scenarios:** `/healthz` returns 200 in prod; forced test error appears in Sentry; deploy a small change, observe it land; rollback works.
 - **Verification:** Kepala opens the production URL from her workstation, signs in, sees the dashboard. User testing session reveals top 3 confusion points; fix them.
+
+### U7. Budget module: Sub Bidang attribution (added after U6)
+
+Added after the original six-unit plan — see "Plan revisions". The need surfaced once real reporting requirements were clear: the Kepala wants budget realization grouped by the BKAD Sub Bidang that owns each Sub Kegiatan, not only by Program.
+
+- **Goal:** Attribute each Sub Kegiatan to a Sub Bidang via a separately-uploaded mapping, and show realization grouped by Sub Bidang on the dashboard.
+- **Requirements:** R13, R14
+- **Files:**
+  - `prisma/schema.prisma` — `BudgetSubBidangMapping` model (`subKegiatanKode` → `bidang`, `subBidang`)
+  - `src/modules/budget/server/parse-subbidang.ts` — mapping spreadsheet parser
+  - `src/modules/budget/server/upload-subbidang.ts` — `uploadSubBidangMapping` server function (full refresh, uploader-only)
+  - `src/modules/budget/server/aggregate-sub-bidang.ts` — `getRealisasiBySubBidang`
+  - `src/routes/admin/sub-bidang/index.tsx` — admin page to upload the mapping
+  - `src/modules/budget/components/SubBidangTable.tsx` — dashboard section
+  - `tests/modules/budget/parse-subbidang.test.ts`
+- **Approach:** The mapping is reference data, not transactional, so it lives in its own table keyed by the stable Sub Kegiatan `kode`, independent of `BudgetRealization` (which is wiped on every LRA upload). It is maintained by re-uploading the mapping spreadsheet — format per `docs/samples/subbidang.xlsx`: columns C / D / E hold the Sub Kegiatan code, Bidang, and Sub Bidang; the file is denormalised and is deduplicated by `kode` on import. The dashboard joins Sub Kegiatan rows to the mapping by `kode`; unmapped Sub Kegiatan roll up under "Belum ditetapkan". The LRA file and its parser are untouched.
+- **Test scenarios:** mapping deduplicates by `kode`; conflicting rows or a missing column → Bahasa error; aggregation totals group by Sub Bidang; unmapped Sub Kegiatan land in "Belum ditetapkan".
+- **Verification:** upload the mapping; the dashboard's per-Sub-Bidang totals sum to the overall realization total.
 
 ## Day Allocation
 

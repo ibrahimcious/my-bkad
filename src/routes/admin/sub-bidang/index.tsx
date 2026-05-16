@@ -1,32 +1,36 @@
 import { type FormEvent, useRef, useState } from 'react'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 
-import { getUploadHistory, uploadLRA } from '@/modules/budget'
-import { formatDateID } from '@/shared/lib/format'
+import { getSubBidangMapping, uploadSubBidangMapping } from '@/modules/budget'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 
-export const Route = createFileRoute('/admin/upload/')({
-  loader: () => getUploadHistory(),
-  component: UploadPage,
+export const Route = createFileRoute('/admin/sub-bidang/')({
+  loader: () => getSubBidangMapping(),
+  component: SubBidangPage,
 })
 
 type Status =
   | { type: 'success'; text: string }
   | { type: 'error'; text: string }
 
-function UploadPage() {
-  const history = Route.useLoaderData()
+function SubBidangPage() {
+  const mapping = Route.useLoaderData()
   const router = useRouter()
   const fileInput = useRef<HTMLInputElement>(null)
   const [status, setStatus] = useState<Status | null>(null)
   const [busy, setBusy] = useState(false)
 
+  const subBidangCount = new Set(mapping.map((row) => row.subBidang)).size
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const file = fileInput.current?.files?.[0]
     if (!file) {
-      setStatus({ type: 'error', text: 'Pilih berkas LRA terlebih dahulu.' })
+      setStatus({
+        type: 'error',
+        text: 'Pilih berkas pemetaan terlebih dahulu.',
+      })
       return
     }
     setBusy(true)
@@ -34,15 +38,15 @@ function UploadPage() {
     try {
       const formData = new FormData()
       formData.append('file', file)
-      const result = await uploadLRA({ data: formData })
+      const result = await uploadSubBidangMapping({ data: formData })
       if (result.ok) {
         const skipped =
           result.warnings.length > 0
-            ? ` ${result.warnings.length} baris dilewati.`
+            ? ` ${result.warnings.length} baris dilewati atau digabung.`
             : ''
         setStatus({
           type: 'success',
-          text: `Berhasil mengunggah ${result.rowCount} baris data.${skipped}`,
+          text: `Berhasil memetakan ${result.count} Sub Kegiatan.${skipped}`,
         })
         if (fileInput.current) fileInput.current.value = ''
         await router.invalidate()
@@ -64,11 +68,13 @@ function UploadPage() {
       <section className="space-y-4">
         <div className="space-y-1">
           <h1 className="text-xl font-semibold tracking-tight">
-            Unggah Data LRA
+            Pemetaan Sub Bidang
           </h1>
           <p className="text-sm text-muted-foreground">
-            Unggah berkas Excel LRA dari SIPD Penatausahaan. Setiap unggahan
-            menggantikan seluruh data anggaran sebelumnya.
+            Unggah berkas Excel pemetaan Sub Kegiatan ke Sub Bidang. Pemetaan
+            ini terpisah dari data LRA dan hanya perlu diperbarui bila struktur
+            organisasi berubah. Setiap unggahan menggantikan pemetaan
+            sebelumnya.
           </p>
         </div>
 
@@ -99,37 +105,19 @@ function UploadPage() {
         ) : null}
       </section>
 
-      <section className="space-y-3">
+      <section className="space-y-2">
         <h2 className="text-sm font-semibold tracking-tight">
-          Riwayat Unggah
+          Pemetaan Saat Ini
         </h2>
-        {history.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Belum ada unggahan.</p>
+        {mapping.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Belum ada pemetaan. Unggah berkas untuk memulai.
+          </p>
         ) : (
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="border-b text-left text-muted-foreground">
-                <th className="py-2 pr-4 font-medium">Nama Berkas</th>
-                <th className="py-2 pr-4 font-medium">Jumlah Baris</th>
-                <th className="py-2 pr-4 font-medium">Status</th>
-                <th className="py-2 font-medium">Waktu</th>
-              </tr>
-            </thead>
-            <tbody>
-              {history.map((entry) => (
-                <tr key={entry.id} className="border-b">
-                  <td className="py-2 pr-4">{entry.fileName}</td>
-                  <td className="py-2 pr-4">{entry.rowCount}</td>
-                  <td className="py-2 pr-4">
-                    {entry.status === 'SUCCESS' ? 'Berhasil' : 'Gagal'}
-                  </td>
-                  <td className="py-2">
-                    {formatDateID(new Date(entry.uploadedAt))}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <p className="text-sm text-muted-foreground">
+            {mapping.length} Sub Kegiatan dipetakan ke {subBidangCount} Sub
+            Bidang.
+          </p>
         )}
       </section>
     </div>

@@ -25,3 +25,16 @@ export const budgetRowSchema = z.object({
 })
 
 export type BudgetRow = z.infer<typeof budgetRowSchema>
+
+/**
+ * A validated Sub Kegiatan → Sub Bidang mapping row, parsed from the
+ * mapping spreadsheet (U7). Mirrors `BudgetSubBidangMapping` minus the
+ * database-generated `id` and `createdAt`.
+ */
+export const subBidangRowSchema = z.object({
+  subKegiatanKode: z.string().trim().min(1),
+  bidang: z.string().trim().min(1),
+  subBidang: z.string().trim().min(1),
+})
+
+export type SubBidangRow = z.infer<typeof subBidangRowSchema>

@@ -4,9 +4,11 @@ import {
   BudgetLineTable,
   KelompokBelanjaChart,
   SerapanRanking,
+  SubBidangTable,
   SummaryCards,
   getBudgetByKelompok,
   getBudgetSummary,
+  getRealisasiBySubBidang,
   getSubKegiatanLines,
   getTopPrograms,
 } from '@/modules/budget'
@@ -14,20 +16,22 @@ import { formatDateID } from '@/shared/lib/format'
 
 export const Route = createFileRoute('/dashboard/')({
   loader: async () => {
-    const [summary, byKelompok, topPrograms, subKegiatan] = await Promise.all([
-      getBudgetSummary(),
-      getBudgetByKelompok(),
-      getTopPrograms(),
-      getSubKegiatanLines(),
-    ])
-    return { summary, byKelompok, topPrograms, subKegiatan }
+    const [summary, byKelompok, topPrograms, subKegiatan, subBidang] =
+      await Promise.all([
+        getBudgetSummary(),
+        getBudgetByKelompok(),
+        getTopPrograms(),
+        getSubKegiatanLines(),
+        getRealisasiBySubBidang(),
+      ])
+    return { summary, byKelompok, topPrograms, subKegiatan, subBidang }
   },
   component: DashboardPage,
   pendingComponent: DashboardPending,
 })
 
 function DashboardPage() {
-  const { summary, byKelompok, topPrograms, subKegiatan } =
+  const { summary, byKelompok, topPrograms, subKegiatan, subBidang } =
     Route.useLoaderData()
 
   // A null timestamp means no LRA has been uploaded yet.
@@ -67,6 +71,8 @@ function DashboardPage() {
         </div>
       </div>
 
+      <SubBidangTable rows={subBidang} />
+
       <BudgetLineTable
         title="Program dengan Anggaran Terbesar"
         nameLabel="Program"
@@ -95,6 +101,7 @@ function DashboardPending() {
         <div className="h-80 animate-pulse rounded-card bg-fog lg:col-span-3" />
         <div className="h-80 animate-pulse rounded-card bg-fog lg:col-span-2" />
       </div>
+      <div className="h-64 animate-pulse rounded-card bg-fog" />
       <div className="h-64 animate-pulse rounded-card bg-fog" />
       <div className="h-96 animate-pulse rounded-card bg-fog" />
     </div>
