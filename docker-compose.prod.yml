@@ -2,7 +2,10 @@
 #
 # Usage (see docs/deploy.md for the full runbook):
 #   cp .env.production.example .env.production   # then fill it in
-#   docker compose -f docker-compose.prod.yml up -d --build
+#   docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
+#
+# The --env-file flag is required: Compose reads it to interpolate the
+# ${...} values below. Pass it on every `docker compose` command.
 
 name: bkad-pasuruan
 
