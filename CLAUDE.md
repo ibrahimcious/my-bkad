@@ -132,5 +132,5 @@ Always commit before starting a substantial task. Always review the diff before 
 
 - Full project plan: `docs/plans/v1-plan.md`
 - Module READMEs: `src/modules/<name>/README.md`
-- LRA sample data: `docs/samples/LRA_Program_Jan_sd_12_Mei_26.xlsx`
+- LRA sample data: `docs/samples/LRA Per Program-17-5-2026.xlsx` (unedited SIPD export)
 

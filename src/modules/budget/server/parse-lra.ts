@@ -45,8 +45,43 @@ function cellText(cell: unknown): string {
   return ''
 }
 
-function cellAmount(cell: unknown): number {
-  return typeof cell === 'number' && Number.isFinite(cell) ? cell : 0
+/**
+ * Parse a monetary cell from the LRA sheet.
+ *
+ * SIPD Penatausahaan exports every amount as **text** in Indonesian
+ * locale — `"36.387.492.566,45"`, where `.` is the thousands separator
+ * and `,` the decimal separator — and writes zero as `"0,00"`. Native
+ * numeric cells are also accepted, since a file re-saved through Excel
+ * may have had its text amounts coerced to numbers.
+ *
+ * Returns `0` for an empty or dash (`"-"`) cell, and `null` when a
+ * non-empty cell cannot be read as a number, so the caller can skip the
+ * row instead of silently importing a zero.
+ */
+function parseAmount(cell: unknown): number | null {
+  if (cell == null) return 0
+  if (typeof cell === 'number') return Number.isFinite(cell) ? cell : null
+  if (typeof cell !== 'string') return null
+
+  let text = cell.trim()
+  if (text === '' || text === '-') return 0
+
+  let sign = 1
+  // Accounting-style negatives: "(1.234,00)".
+  if (text.startsWith('(') && text.endsWith(')')) {
+    sign = -1
+    text = text.slice(1, -1).trim()
+  } else if (text.startsWith('-')) {
+    sign = -1
+    text = text.slice(1).trim()
+  }
+
+  // Drop the "." thousands separators, then make "," the decimal point.
+  const normalized = text.replace(/\./g, '').replace(',', '.')
+  if (!/^\d+(?:\.\d+)?$/.test(normalized)) return null
+
+  const value = Number(normalized)
+  return Number.isFinite(value) ? sign * value : null
 }
 
 /**
@@ -211,19 +246,29 @@ export function parseLRA(input: ArrayBuffer | Uint8Array): ParsedLRA {
         break
     }
 
+    const amounts = {
+      anggaranOperasi: parseAmount(row[AMOUNT_COLUMNS.anggaranOperasi]),
+      realisasiOperasi: parseAmount(row[AMOUNT_COLUMNS.realisasiOperasi]),
+      anggaranModal: parseAmount(row[AMOUNT_COLUMNS.anggaranModal]),
+      realisasiModal: parseAmount(row[AMOUNT_COLUMNS.realisasiModal]),
+      anggaranTakTerduga: parseAmount(row[AMOUNT_COLUMNS.anggaranTakTerduga]),
+      realisasiTakTerduga: parseAmount(row[AMOUNT_COLUMNS.realisasiTakTerduga]),
+      anggaranTransfer: parseAmount(row[AMOUNT_COLUMNS.anggaranTransfer]),
+      realisasiTransfer: parseAmount(row[AMOUNT_COLUMNS.realisasiTransfer]),
+    }
+    if (Object.values(amounts).some((value) => value === null)) {
+      warnings.push(
+        `Baris dengan kode "${codeInfo.code}" dilewati karena nilai rupiah tidak dapat dibaca.`,
+      )
+      continue
+    }
+
     const candidate = {
       kode: codeInfo.code,
       parentKode,
       level,
       uraian,
-      anggaranOperasi: cellAmount(row[AMOUNT_COLUMNS.anggaranOperasi]),
-      realisasiOperasi: cellAmount(row[AMOUNT_COLUMNS.realisasiOperasi]),
-      anggaranModal: cellAmount(row[AMOUNT_COLUMNS.anggaranModal]),
-      realisasiModal: cellAmount(row[AMOUNT_COLUMNS.realisasiModal]),
-      anggaranTakTerduga: cellAmount(row[AMOUNT_COLUMNS.anggaranTakTerduga]),
-      realisasiTakTerduga: cellAmount(row[AMOUNT_COLUMNS.realisasiTakTerduga]),
-      anggaranTransfer: cellAmount(row[AMOUNT_COLUMNS.anggaranTransfer]),
-      realisasiTransfer: cellAmount(row[AMOUNT_COLUMNS.realisasiTransfer]),
+      ...(amounts as Record<keyof typeof amounts, number>),
     }
 
     const validated = budgetRowSchema.safeParse(candidate)
