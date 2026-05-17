@@ -1,9 +1,9 @@
 import {
   Bar,
+  BarChart,
   CartesianGrid,
-  ComposedChart,
+  LabelList,
   Legend,
-  Line,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -18,7 +18,14 @@ interface KelompokBelanjaChartProps {
   data: KelompokBelanjaBreakdown[]
 }
 
-/** Grouped bar chart: Anggaran vs Realisasi per Kelompok Belanja, with % Serapan line. */
+/**
+ * Grouped bar chart: Anggaran vs Realisasi for all four Kelompok
+ * Belanja (Operasi, Modal, Tak Terduga, Transfer).
+ *
+ * Each Realisasi bar is labelled with its serapan percentage — the
+ * categories are independent, so no connecting line is drawn between
+ * them (a line would wrongly read as a trend over time).
+ */
 export function KelompokBelanjaChart({ data }: KelompokBelanjaChartProps) {
   const isEmpty = data.every((d) => d.anggaran === 0 && d.realisasi === 0)
 
@@ -32,60 +39,78 @@ export function KelompokBelanjaChart({ data }: KelompokBelanjaChartProps) {
           <p className="text-sm text-steel">Belum ada data.</p>
         </div>
       ) : (
-        <div className="mt-4 h-72">
+        <div className="mt-6 h-72">
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={data} margin={{ top: 8, right: 48, bottom: 0, left: 8 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ececee" />
-              <XAxis dataKey="kelompok" tick={{ fontSize: 12, fill: '#71717a' }} />
-              <YAxis
-                yAxisId="left"
-                tickFormatter={formatIDRCompact}
+            <BarChart
+              data={data}
+              barGap={8}
+              barCategoryGap="32%"
+              margin={{ top: 24, right: 8, bottom: 0, left: 8 }}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                vertical={false}
+                stroke="#ececee"
+              />
+              <XAxis
+                dataKey="kelompok"
+                tickLine={false}
+                axisLine={{ stroke: '#ececee' }}
                 tick={{ fontSize: 12, fill: '#71717a' }}
-                width={80}
+                dy={4}
               />
               <YAxis
-                yAxisId="right"
-                orientation="right"
-                domain={[0, 100]}
-                tickFormatter={(v: number) => `${v}%`}
+                tickFormatter={formatIDRCompact}
+                tickLine={false}
+                axisLine={false}
                 tick={{ fontSize: 12, fill: '#71717a' }}
-                width={44}
+                width={72}
               />
               <Tooltip
+                cursor={{ fill: 'rgba(9, 9, 11, 0.04)' }}
+                contentStyle={{
+                  borderRadius: 12,
+                  border: '1px solid #ececee',
+                  fontSize: 12,
+                  boxShadow: '0 4px 12px rgba(9, 9, 11, 0.08)',
+                }}
+                labelStyle={{ color: '#09090b', fontWeight: 600 }}
                 formatter={(value, name) => {
                   // Recharts types `value` as ValueType | undefined.
                   const amount =
                     typeof value === 'number' ? value : Number(value) || 0
-                  return name === 'Serapan (%)'
-                    ? [`${amount.toFixed(2)}%`, name]
-                    : [formatIDR(amount), name]
+                  return [formatIDR(amount), name]
                 }}
               />
-              <Legend />
+              <Legend
+                iconType="circle"
+                iconSize={8}
+                wrapperStyle={{ fontSize: 12, paddingTop: 12 }}
+              />
               <Bar
-                yAxisId="left"
                 dataKey="anggaran"
                 name="Anggaran"
-                fill="var(--color-ash)"
-                radius={[4, 4, 0, 0]}
+                fill="var(--color-chart-2)"
+                radius={[6, 6, 0, 0]}
+                maxBarSize={64}
               />
               <Bar
-                yAxisId="left"
                 dataKey="realisasi"
                 name="Realisasi"
-                fill="var(--color-obsidian)"
-                radius={[4, 4, 0, 0]}
-              />
-              <Line
-                yAxisId="right"
-                type="monotone"
-                dataKey="persentaseSerapan"
-                name="Serapan (%)"
-                stroke="#f59e0b"
-                strokeWidth={2}
-                dot={{ r: 4, fill: '#f59e0b' }}
-              />
-            </ComposedChart>
+                fill="var(--color-chart-1)"
+                radius={[6, 6, 0, 0]}
+                maxBarSize={64}
+              >
+                <LabelList
+                  dataKey="persentaseSerapan"
+                  position="top"
+                  fill="#3f3f46"
+                  fontSize={11}
+                  fontWeight={600}
+                  formatter={(value) => `${Math.round(Number(value) || 0)}%`}
+                />
+              </Bar>
+            </BarChart>
           </ResponsiveContainer>
         </div>
       )}
