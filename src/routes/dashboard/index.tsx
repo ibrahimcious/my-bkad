@@ -3,38 +3,29 @@ import { createFileRoute } from '@tanstack/react-router'
 import {
   BudgetLineTable,
   KelompokBelanjaChart,
-  SerapanRanking,
-  SubBidangTable,
   SummaryCards,
   getBudgetByKelompok,
   getBudgetSummary,
-  getRealisasiBySubBidang,
   getSubKegiatanLines,
-  getTopPrograms,
 } from '@/modules/budget'
 import { formatDateID } from '@/shared/lib/format'
 
 export const Route = createFileRoute('/dashboard/')({
   loader: async () => {
-    const [summary, byKelompok, topPrograms, subKegiatan, subBidang] =
-      await Promise.all([
-        getBudgetSummary(),
-        getBudgetByKelompok(),
-        getTopPrograms(),
-        getSubKegiatanLines(),
-        getRealisasiBySubBidang(),
-      ])
-    return { summary, byKelompok, topPrograms, subKegiatan, subBidang }
+    const [summary, byKelompok, subKegiatan] = await Promise.all([
+      getBudgetSummary(),
+      getBudgetByKelompok(),
+      getSubKegiatanLines(),
+    ])
+    return { summary, byKelompok, subKegiatan }
   },
   component: DashboardPage,
   pendingComponent: DashboardPending,
 })
 
 function DashboardPage() {
-  const { summary, byKelompok, topPrograms, subKegiatan, subBidang } =
-    Route.useLoaderData()
+  const { summary, byKelompok, subKegiatan } = Route.useLoaderData()
 
-  // A null timestamp means no LRA has been uploaded yet.
   if (summary.lastUpdatedAt === null) {
     return (
       <div className="rounded-card border border-fog bg-snow p-10 text-center">
@@ -59,30 +50,13 @@ function DashboardPage() {
 
       <SummaryCards summary={summary} />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-        <div className="lg:col-span-3">
-          <KelompokBelanjaChart data={byKelompok} />
-        </div>
-        <div className="lg:col-span-2">
-          <SerapanRanking
-            highest={topPrograms.highestSerapan}
-            lowest={topPrograms.lowestSerapan}
-          />
-        </div>
-      </div>
-
-      <SubBidangTable rows={subBidang} />
-
-      <BudgetLineTable
-        title="Program dengan Anggaran Terbesar"
-        nameLabel="Program"
-        lines={topPrograms.byAnggaran}
-      />
+      <KelompokBelanjaChart data={byKelompok} />
 
       <BudgetLineTable
         title="Rincian Anggaran dan Realisasi per Sub Kegiatan"
         nameLabel="Sub Kegiatan"
         lines={subKegiatan}
+        showSubBidang
       />
     </div>
   )
@@ -97,12 +71,7 @@ function DashboardPending() {
           <div key={index} className="h-24 animate-pulse rounded-card bg-fog" />
         ))}
       </div>
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-        <div className="h-80 animate-pulse rounded-card bg-fog lg:col-span-3" />
-        <div className="h-80 animate-pulse rounded-card bg-fog lg:col-span-2" />
-      </div>
-      <div className="h-64 animate-pulse rounded-card bg-fog" />
-      <div className="h-64 animate-pulse rounded-card bg-fog" />
+      <div className="h-80 animate-pulse rounded-card bg-fog" />
       <div className="h-96 animate-pulse rounded-card bg-fog" />
     </div>
   )

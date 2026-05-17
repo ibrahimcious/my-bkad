@@ -19,6 +19,7 @@ export type {
   BudgetSummary,
   KelompokBelanjaBreakdown,
   BudgetLineAggregate,
+  SubKegiatanLine,
   TopPrograms,
   SubBidangAggregate,
 } from './server/aggregations'

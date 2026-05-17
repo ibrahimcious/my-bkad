@@ -142,6 +142,11 @@ export interface BudgetLineAggregate {
   persentaseSerapan: number
 }
 
+/** BudgetLineAggregate with sub bidang label attached (Sub Kegiatan lines). */
+export interface SubKegiatanLine extends BudgetLineAggregate {
+  subBidang: string
+}
+
 /** Roll a budget row's amounts up into a {@link BudgetLineAggregate}. */
 export function toBudgetLine(
   kode: string,

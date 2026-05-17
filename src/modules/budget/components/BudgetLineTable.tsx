@@ -9,7 +9,9 @@ interface BudgetLineTableProps {
   title: string
   /** Header label for the description column (e.g. "Program"). */
   nameLabel: string
-  lines: BudgetLineAggregate[]
+  lines: Array<BudgetLineAggregate & { subBidang?: string }>
+  /** When true, renders a Sub Bidang column between the name and numeric cols. */
+  showSubBidang?: boolean
 }
 
 type SortKey = 'totalAnggaran' | 'totalRealisasi' | 'persentaseSerapan'
@@ -21,7 +23,7 @@ const NUMERIC_COLUMNS: { key: SortKey; label: string }[] = [
 ]
 
 /** A sortable table of budget lines (programs, sub kegiatan, etc.). */
-export function BudgetLineTable({ title, nameLabel, lines }: BudgetLineTableProps) {
+export function BudgetLineTable({ title, nameLabel, lines, showSubBidang }: BudgetLineTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('totalAnggaran')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
@@ -52,6 +54,9 @@ export function BudgetLineTable({ title, nameLabel, lines }: BudgetLineTableProp
             <tr className="border-b border-fog text-left text-steel">
               <th className="py-2 pr-4 font-medium">Kode</th>
               <th className="py-2 pr-4 font-medium">{nameLabel}</th>
+              {showSubBidang && (
+                <th className="py-2 pr-4 font-medium">Sub Bidang</th>
+              )}
               {NUMERIC_COLUMNS.map((column) => (
                 <th key={column.key} className="py-2 pl-4 text-right font-medium">
                   <button
@@ -75,6 +80,9 @@ export function BudgetLineTable({ title, nameLabel, lines }: BudgetLineTableProp
               <tr key={line.kode} className="border-b border-fog">
                 <td className="py-2 pr-4 tabular-nums text-steel">{line.kode}</td>
                 <td className="py-2 pr-4 text-ink">{line.uraian}</td>
+                {showSubBidang && (
+                  <td className="py-2 pr-4 text-steel">{line.subBidang ?? '—'}</td>
+                )}
                 <td className="py-2 pl-4 text-right tabular-nums text-ink">
                   {formatIDR(line.totalAnggaran)}
                 </td>
