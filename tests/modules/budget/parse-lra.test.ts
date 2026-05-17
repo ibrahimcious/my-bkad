@@ -37,12 +37,14 @@ function lraWorkbook(
 }
 
 // One row per hierarchy level. Columns A–D carry ancestor context; the
-// rightmost filled column holds the row's own code.
-const UNSUR = ['5', null, null, null, 'UNSUR PENUNJANG', 1000, 200, 0, 0, 0, 0, 0, 0]
-const PROGRAM = ['5.02', '5.02.0.00.0.00.01.0000', '5.02.01', null, 'PROGRAM A', 800, 150, 0, 0, 0, 0, 0, 0]
-const KEGIATAN = ['5.02', '5.02.0.00.0.00.01.0000', '5.02.01.2.01', null, 'KEGIATAN A', 500, 90, 0, 0, 0, 0, 0, 0]
-const SUB_KEGIATAN = ['5.02', '5.02.0.00.0.00.01.0000', '5.02.01.2.01.0001', null, 'SUB KEGIATAN A', 300, 40, 0, 0, 0, 0, 0, 0]
-const REKENING = ['5.02', '5.02.0.00.0.00.01.0000', '5.02.01.2.01.0001', '5.1.02', 'Belanja Barang dan Jasa', 300, 40, 0, 0, 0, 0, 0, 0]
+// rightmost filled column holds the row's own code. Amounts are written
+// as Indonesian-locale text strings ("1.000,00") because that is how
+// SIPD Penatausahaan exports them — see parseAmount in parse-lra.ts.
+const UNSUR = ['5', null, null, null, 'UNSUR PENUNJANG', '1.000,00', '200,00', '0,00', '0,00', '0,00', '0,00', '0,00', '0,00']
+const PROGRAM = ['5.02', '5.02.0.00.0.00.01.0000', '5.02.01', null, 'PROGRAM A', '800,00', '150,00', '0,00', '0,00', '0,00', '0,00', '0,00', '0,00']
+const KEGIATAN = ['5.02', '5.02.0.00.0.00.01.0000', '5.02.01.2.01', null, 'KEGIATAN A', '500,00', '90,00', '0,00', '0,00', '0,00', '0,00', '0,00', '0,00']
+const SUB_KEGIATAN = ['5.02', '5.02.0.00.0.00.01.0000', '5.02.01.2.01.0001', null, 'SUB KEGIATAN A', '300,00', '40,00', '0,00', '0,00', '0,00', '0,00', '0,00', '0,00']
+const REKENING = ['5.02', '5.02.0.00.0.00.01.0000', '5.02.01.2.01.0001', '5.1.02', 'Belanja Barang dan Jasa', '300,00', '40,00', '0,00', '0,00', '0,00', '0,00', '0,00', '0,00']
 
 describe('parseLRA — happy path', () => {
   it('parses one row per hierarchy level with linked parent codes', () => {
@@ -70,6 +72,19 @@ describe('parseLRA — happy path', () => {
       anggaranOperasi: 1000,
       realisasiOperasi: 200,
     })
+  })
+
+  it('reads Indonesian-locale text amounts, including decimals', () => {
+    const decimals = ['5', null, null, null, 'UNSUR PENUNJANG', '36.387.492.566,45', '0,00', '0,00', '0,00', '0,00', '0,00', '0,00', '0,00']
+    const { rows } = parseLRA(lraWorkbook([decimals]))
+    expect(rows[0]?.anggaranOperasi).toBe(36387492566.45)
+    expect(rows[0]?.realisasiOperasi).toBe(0)
+  })
+
+  it('also accepts native numeric amount cells (Excel-re-saved files)', () => {
+    const native = ['5', null, null, null, 'UNSUR PENUNJANG', 1000, 200, 0, 0, 0, 0, 0, 0]
+    const { rows } = parseLRA(lraWorkbook([native]))
+    expect(rows[0]).toMatchObject({ anggaranOperasi: 1000, realisasiOperasi: 200 })
   })
 
   it('skips Urusan and Organisasi rows', () => {
@@ -115,12 +130,22 @@ describe('parseLRA — error handling', () => {
     expect(warnings).toHaveLength(1)
     expect(warnings[0]).toContain('5.02.01.2')
   })
+
+  it('skips a row whose amount cannot be read, with a warning', () => {
+    // A non-numeric amount must not be silently imported as zero.
+    const badAmount = ['5', null, null, null, 'UNSUR PENUNJANG', 'tidak ada', '200,00', '0,00', '0,00', '0,00', '0,00', '0,00', '0,00']
+    const { rows, warnings } = parseLRA(lraWorkbook([badAmount, PROGRAM]))
+
+    expect(rows.map((r) => r.level)).toEqual(['PROGRAM'])
+    expect(warnings).toHaveLength(1)
+    expect(warnings[0]).toContain('nilai rupiah')
+  })
 })
 
 describe('parseLRA — real LRA sample', () => {
-  const sample = readFileSync(
-    'docs/samples/LRA Program Jan sd 12 Mei 26.xlsx',
-  )
+  // The canonical sample is an unedited export downloaded straight from
+  // SIPD Penatausahaan: amounts are Indonesian-locale text, not numbers.
+  const sample = readFileSync('docs/samples/LRA Per Program-17-5-2026.xlsx')
 
   it('parses the real SIPD export end-to-end', () => {
     const { rows } = parseLRA(sample)
@@ -130,6 +155,7 @@ describe('parseLRA — real LRA sample', () => {
     expect(unsur).toHaveLength(1)
     expect(unsur[0]?.kode).toBe('5')
     expect(unsur[0]?.anggaranOperasi).toBe(36387492566.45)
+    expect(unsur[0]?.realisasiOperasi).toBe(7991002283)
 
     const levels = new Set(rows.map((r) => r.level))
     expect(levels).toContain('PROGRAM')

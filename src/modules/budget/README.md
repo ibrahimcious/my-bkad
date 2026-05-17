@@ -5,9 +5,16 @@ LRA (Laporan Realisasi Anggaran) data for the BKAD Pasuruan dashboard — v1.
 ## Data source
 
 Budget realization is exported from **SIPD Penatausahaan** as an Excel file
-(the "LRA per Program" report). The current sample lives at
-`docs/samples/LRA Program Jan sd 12 Mei 26.xlsx`. There is no API
-integration in v1 — data is refreshed by manual upload on `/admin/upload`.
+(the "LRA per Program" report). The canonical sample lives at
+`docs/samples/LRA Per Program-17-5-2026.xlsx` — an **unedited** export
+downloaded straight from SIPD. There is no API integration in v1 — data is
+refreshed by manual upload on `/admin/upload`.
+
+> **Do not edit the sample in Excel before using it as a fixture.** Opening
+> and re-saving an LRA export can silently coerce its text-typed amount
+> cells into native numbers and rewrite them in the host machine's locale.
+> The parser is built against the *raw* SIPD format described below; a
+> re-saved file is not representative.
 
 ## Database
 
@@ -62,6 +69,29 @@ title rows do not break it.
 | J–K    | Tak Terduga — Anggaran, Realisasi |
 | L–M    | Transfer — Anggaran, Realisasi |
 | N–P    | Jumlah (Anggaran, Realisasi) and % — **not stored**, derived in aggregation |
+
+### Amount cells
+
+This is the most error-prone part of the format. SIPD exports every
+monetary cell (columns F–M) as **text**, not as a number:
+
+- The cell type is `s` (string), e.g. the literal `"36.387.492.566,45"`.
+- Numbers use **Indonesian locale**: `.` is the thousands separator and
+  `,` is the decimal separator. Every value carries two decimal places.
+- Zero is written as the text `"0,00"`.
+
+`parseAmount` in `parse-lra.ts` normalises this — it strips the `.`
+thousands separators, converts the `,` decimal to `.`, and parses the
+result. It also accepts native numeric cells (a file re-saved through
+Excel may have its text amounts coerced to numbers) and accounting-style
+negatives like `"(1.234,00)"`. A non-empty cell it cannot read yields no
+silent zero: the whole row is skipped with a warning.
+
+> Reading these cells with `Number()` or a US-locale parser misreads
+> every value catastrophically (`"36.387.492.566,45"` → `36.387`). The
+> v1 parser was first built against a sample that had been re-saved in
+> Excel, hiding this; see the regression test in
+> `tests/modules/budget/parse-lra.test.ts`.
 
 ### Hierarchy and level detection
 

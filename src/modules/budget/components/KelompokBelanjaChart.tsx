@@ -52,11 +52,14 @@ export function KelompokBelanjaChart({ data }: KelompokBelanjaChartProps) {
                 width={44}
               />
               <Tooltip
-                formatter={(value: number, name: string) =>
-                  name === 'Serapan (%)'
-                    ? [`${value.toFixed(2)}%`, name]
-                    : [formatIDR(value), name]
-                }
+                formatter={(value, name) => {
+                  // Recharts types `value` as ValueType | undefined.
+                  const amount =
+                    typeof value === 'number' ? value : Number(value) || 0
+                  return name === 'Serapan (%)'
+                    ? [`${amount.toFixed(2)}%`, name]
+                    : [formatIDR(amount), name]
+                }}
               />
               <Legend />
               <Bar
