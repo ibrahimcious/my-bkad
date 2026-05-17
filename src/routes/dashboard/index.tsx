@@ -1,8 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 
 import {
-  BudgetLineTable,
   KelompokBelanjaChart,
+  SubKegiatanTable,
   SummaryCards,
   getBudgetByKelompok,
   getBudgetSummary,
@@ -52,12 +52,7 @@ function DashboardPage() {
 
       <KelompokBelanjaChart data={byKelompok} />
 
-      <BudgetLineTable
-        title="Rincian Anggaran dan Realisasi per Sub Kegiatan"
-        nameLabel="Sub Kegiatan"
-        lines={subKegiatan}
-        showSubBidang
-      />
+      <SubKegiatanTable lines={subKegiatan} />
     </div>
   )
 }
