@@ -8,7 +8,11 @@ export { getUploadHistory } from './server/upload-history'
 export { getBudgetSummary } from './server/aggregate-summary'
 export { getBudgetByKelompok } from './server/aggregate-by-kelompok'
 export { getTopPrograms } from './server/aggregate-top-programs'
-export { getSubKegiatanLines } from './server/aggregate-sub-kegiatan'
+export {
+  getSubKegiatanLines,
+  getSubKegiatanDetail,
+  type SubKegiatanDetailResult,
+} from './server/aggregate-sub-kegiatan'
 export { getRealisasiBySubBidang } from './server/aggregate-sub-bidang'
 export {
   uploadSubBidangMapping,
@@ -30,3 +34,4 @@ export { SerapanRanking } from './components/SerapanRanking'
 export { BudgetLineTable } from './components/BudgetLineTable'
 export { SubBidangTable } from './components/SubBidangTable'
 export { SubKegiatanTable } from './components/SubKegiatanTable'
+export { SubKegiatanDetail } from './components/SubKegiatanDetail'
