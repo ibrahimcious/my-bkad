@@ -7,7 +7,7 @@ import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 
 export const Route = createFileRoute('/admin/upload/')({
-  loader: () => getUploadHistory(),
+  loader: () => getUploadHistory({ data: 'BELANJA' }),
   component: UploadPage,
 })
 

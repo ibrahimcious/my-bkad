@@ -27,21 +27,21 @@ Prisma models (see `prisma/schema.prisma`), all prefixed `Budget`:
 - `BudgetPendapatanRealization` — one row per stored Pendapatan LRA line,
   linked by `parentKode`, with the row's `level` recorded. Carries one
   Anggaran, one Realisasi, and the prior year's Realisasi.
-- `BudgetUploadHistory` — audit record of every belanja LRA upload.
-- `BudgetPendapatanUploadHistory` — audit record of every Pendapatan LRA
-  upload, kept separate so each pipeline's history is independent.
-- `BudgetKabupatenBelanja` / `BudgetKabupatenPembiayaan` — single-row
-  tables holding the kabupaten-wide Belanja and Pembiayaan grand totals
-  (the account-5 and account-6 roots of the full LRA file), captured on
-  Pendapatan upload. They give the dashboard overview the three APBD
-  components alongside Pendapatan.
+- `BudgetUploadHistory` — audit record of every upload attempt across all
+  three pipelines, discriminated by `kind` (`BELANJA` / `PENDAPATAN` /
+  `SUB_BIDANG`).
+- `BudgetKabupatenLraTotal` — kabupaten-wide Belanja and Pembiayaan grand
+  totals, one row per `section`, captured from the full LRA file on
+  Pendapatan upload; gives the dashboard overview the three APBD components
+  alongside Pendapatan.
 - `BudgetSubBidangMapping` — maps each Sub Kegiatan to a Sub Bidang (U7).
   Reference data, keyed by the stable `subKegiatanKode`, so it survives
   the `BudgetRealization` full refresh.
 
 Each LRA upload is a full refresh: the prior dataset is deleted and
-replaced, inside a single transaction (see `server/upload-lra.ts`). The
-Sub Bidang mapping is uploaded and refreshed separately.
+replaced, inside a single transaction. Every upload pipeline runs through
+the shared `createUploadFn` handler (`server/upload-handler.ts`), which owns
+the role gate, transaction, history write, and error mapping.
 
 ## Public API
 

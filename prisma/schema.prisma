@@ -54,6 +54,21 @@ enum UploadStatus {
   FAILED
 }
 
+/// Which dataset an upload attempt belongs to. Lets one upload-history
+/// table serve all three upload pipelines.
+enum UploadKind {
+  BELANJA
+  PENDAPATAN
+  SUB_BIDANG
+}
+
+/// A non-Pendapatan section of the full LRA file whose grand total the
+/// dashboard overview needs.
+enum LraSection {
+  BELANJA
+  PEMBIAYAAN
+}
+
 /// One row parsed from an LRA Excel export. The full hierarchy is
 /// stored (every level), linked by `parentKode`. Each upload performs
 /// a full refresh: prior rows are deleted and the new set inserted.
@@ -114,56 +129,33 @@ model BudgetPendapatanRealization {
   @@index([parentKode])
 }
 
-/// Audit record of every LRA upload attempt — successful or failed.
-/// `getUploadHistory` (U3) reads this; the dashboard's "Terakhir
-/// diperbarui" timestamp (U4) comes from the latest SUCCESS row.
+/// Audit record of every upload attempt — successful or failed — across
+/// all three pipelines, discriminated by `kind`. The dashboard's
+/// "Terakhir diperbarui" timestamps come from the latest SUCCESS row of
+/// the relevant kind.
 model BudgetUploadHistory {
   id         String       @id @default(cuid())
+  kind       UploadKind
   fileName   String
   rowCount   Int          @default(0)
   status     UploadStatus
   message    String?
   uploadedAt DateTime     @default(now())
 
-  @@index([uploadedAt])
+  @@index([kind, uploadedAt])
 }
 
-/// Audit record of every Pendapatan LRA upload attempt — kept separate
-/// from BudgetUploadHistory so each pipeline's history is independent.
-model BudgetPendapatanUploadHistory {
-  id         String       @id @default(cuid())
-  fileName   String
-  rowCount   Int          @default(0)
-  status     UploadStatus
-  message    String?
-  uploadedAt DateTime     @default(now())
-
-  @@index([uploadedAt])
-}
-
-/// Kabupaten-wide Belanja grand total, taken from the account-5 root of
-/// the full LRA file uploaded for Pendapatan. It lets the dashboard
-/// overview compute a Surplus/Defisit against kabupaten Pendapatan —
-/// the per-OPD belanja in BudgetRealization is a different (BKAD-only)
-/// scope. A single row, replaced on every Pendapatan upload.
-model BudgetKabupatenBelanja {
-  id                String   @id @default(cuid())
-  anggaran          Decimal  @default(0) @db.Decimal(18, 2)
-  realisasi         Decimal  @default(0) @db.Decimal(18, 2)
-  realisasiPrevYear Decimal  @default(0) @db.Decimal(18, 2)
-  createdAt         DateTime @default(now())
-}
-
-/// Kabupaten-wide Pembiayaan grand total, taken from the account-6 root
-/// of the full LRA file uploaded for Pendapatan. With Pendapatan and
-/// Belanja it gives the overview the three APBD components. A single
-/// row, replaced on every Pendapatan upload.
-model BudgetKabupatenPembiayaan {
-  id                String   @id @default(cuid())
-  anggaran          Decimal  @default(0) @db.Decimal(18, 2)
-  realisasi         Decimal  @default(0) @db.Decimal(18, 2)
-  realisasiPrevYear Decimal  @default(0) @db.Decimal(18, 2)
-  createdAt         DateTime @default(now())
+/// Kabupaten-wide grand total for a non-Pendapatan LRA section (Belanja
+/// or Pembiayaan), taken from the account-5 / account-6 root of the
+/// full LRA file. With Pendapatan it gives the overview the three APBD
+/// components. One row per section, replaced on every Pendapatan upload.
+model BudgetKabupatenLraTotal {
+  id                String     @id @default(cuid())
+  section           LraSection @unique
+  anggaran          Decimal    @default(0) @db.Decimal(18, 2)
+  realisasi         Decimal    @default(0) @db.Decimal(18, 2)
+  realisasiPrevYear Decimal    @default(0) @db.Decimal(18, 2)
+  createdAt         DateTime   @default(now())
 }
 
 /// Maps each Sub Kegiatan to the BKAD Sub Bidang that owns it (U7).

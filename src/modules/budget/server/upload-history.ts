@@ -1,4 +1,6 @@
+import { UploadKind } from '@prisma/client'
 import { createServerFn } from '@tanstack/react-start'
+import { z } from 'zod'
 
 import { prisma } from '@/shared/db'
 
@@ -6,14 +8,16 @@ import { prisma } from '@/shared/db'
 const HISTORY_LIMIT = 20
 
 /**
- * Return the most recent LRA upload attempts, newest first. Used by the
- * admin upload page to show a history of refreshes.
+ * The most recent upload attempts of a given kind, newest first. One
+ * `BudgetUploadHistory` table serves every pipeline, discriminated by
+ * `kind`; each admin upload page passes its own kind.
  */
-export const getUploadHistory = createServerFn({ method: 'GET' }).handler(
-  () => {
-    return prisma.budgetUploadHistory.findMany({
+export const getUploadHistory = createServerFn({ method: 'GET' })
+  .inputValidator((kind: unknown) => z.enum(UploadKind).parse(kind))
+  .handler(({ data: kind }) =>
+    prisma.budgetUploadHistory.findMany({
+      where: { kind },
       orderBy: { uploadedAt: 'desc' },
       take: HISTORY_LIMIT,
-    })
-  },
-)
+    }),
+  )

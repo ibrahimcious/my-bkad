@@ -46,7 +46,7 @@ function SubBidangPage() {
             : ''
         setStatus({
           type: 'success',
-          text: `Berhasil memetakan ${result.count} Sub Kegiatan.${skipped}`,
+          text: `Berhasil memetakan ${result.rowCount} Sub Kegiatan.${skipped}`,
         })
         if (fileInput.current) fileInput.current.value = ''
         await router.invalidate()
