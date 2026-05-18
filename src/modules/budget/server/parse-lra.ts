@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx'
 import { LRAParseError } from '@/shared/lib/errors'
 
 import { type BudgetRow, budgetRowSchema } from '../schema'
+import { parseAmount } from './parse-amount'
 
 /** Outcome of parsing an LRA workbook. */
 export interface ParsedLRA {
@@ -43,45 +44,6 @@ function cellText(cell: unknown): string {
   if (typeof cell === 'string') return cell.trim()
   if (typeof cell === 'number' && Number.isFinite(cell)) return String(cell)
   return ''
-}
-
-/**
- * Parse a monetary cell from the LRA sheet.
- *
- * SIPD Penatausahaan exports every amount as **text** in Indonesian
- * locale — `"36.387.492.566,45"`, where `.` is the thousands separator
- * and `,` the decimal separator — and writes zero as `"0,00"`. Native
- * numeric cells are also accepted, since a file re-saved through Excel
- * may have had its text amounts coerced to numbers.
- *
- * Returns `0` for an empty or dash (`"-"`) cell, and `null` when a
- * non-empty cell cannot be read as a number, so the caller can skip the
- * row instead of silently importing a zero.
- */
-function parseAmount(cell: unknown): number | null {
-  if (cell == null) return 0
-  if (typeof cell === 'number') return Number.isFinite(cell) ? cell : null
-  if (typeof cell !== 'string') return null
-
-  let text = cell.trim()
-  if (text === '' || text === '-') return 0
-
-  let sign = 1
-  // Accounting-style negatives: "(1.234,00)".
-  if (text.startsWith('(') && text.endsWith(')')) {
-    sign = -1
-    text = text.slice(1, -1).trim()
-  } else if (text.startsWith('-')) {
-    sign = -1
-    text = text.slice(1).trim()
-  }
-
-  // Drop the "." thousands separators, then make "," the decimal point.
-  const normalized = text.replace(/\./g, '').replace(',', '.')
-  if (!/^\d+(?:\.\d+)?$/.test(normalized)) return null
-
-  const value = Number(normalized)
-  return Number.isFinite(value) ? sign * value : null
 }
 
 /**

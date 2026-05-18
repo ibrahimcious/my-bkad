@@ -1,4 +1,4 @@
-import { BudgetLevel } from '@prisma/client'
+import { BudgetLevel, PendapatanLevel } from '@prisma/client'
 import { z } from 'zod'
 
 /** A monetary amount from the LRA. Non-finite values are rejected. */
@@ -25,6 +25,23 @@ export const budgetRowSchema = z.object({
 })
 
 export type BudgetRow = z.infer<typeof budgetRowSchema>
+
+/**
+ * A single validated BudgetPendapatanRealization row produced by the
+ * Pendapatan LRA parser. Mirrors the `BudgetPendapatanRealization`
+ * Prisma model minus the database-generated `id` and `createdAt`.
+ */
+export const pendapatanRowSchema = z.object({
+  kode: z.string().trim().min(1),
+  parentKode: z.string().trim().min(1).nullable(),
+  level: z.enum(PendapatanLevel),
+  uraian: z.string().trim().min(1),
+  anggaran: amount,
+  realisasi: amount,
+  realisasiPrevYear: amount,
+})
+
+export type PendapatanRow = z.infer<typeof pendapatanRowSchema>
 
 /**
  * A validated Sub Kegiatan → Sub Bidang mapping row, parsed from the
