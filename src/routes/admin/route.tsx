@@ -27,7 +27,13 @@ function AdminLayout() {
             to="/admin/upload"
             className="text-sm text-muted-foreground hover:text-foreground"
           >
-            Unggah LRA
+            Unggah Belanja
+          </Link>
+          <Link
+            to="/admin/upload-pendapatan"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            Unggah Pendapatan
           </Link>
           <Link
             to="/admin/sub-bidang"

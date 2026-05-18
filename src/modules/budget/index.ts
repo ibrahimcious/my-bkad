@@ -5,6 +5,10 @@
 
 export { uploadLRA, type UploadResult } from './server/upload-lra'
 export { getUploadHistory } from './server/upload-history'
+export {
+  uploadPendapatanLRA,
+  getPendapatanUploadHistory,
+} from './server/upload-lra-pendapatan'
 export { getBudgetSummary } from './server/aggregate-summary'
 export { getBudgetByKelompok } from './server/aggregate-by-kelompok'
 export { getTopPrograms } from './server/aggregate-top-programs'
