@@ -2,6 +2,8 @@ import { UserRole } from '@prisma/client'
 import { redirect } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 
+import { prisma } from '@/shared/db'
+
 import { type SessionUser, getSessionUser } from './session'
 
 /**
@@ -12,6 +14,28 @@ import { type SessionUser, getSessionUser } from './session'
  */
 export const getCurrentUser = createServerFn({ method: 'GET' }).handler(
   (): Promise<SessionUser | null> => getSessionUser(),
+)
+
+/** The signed-in user's display identity, for the dashboard nav bar. */
+export interface UserProfile {
+  name: string
+  role: UserRole
+}
+
+/**
+ * The signed-in user's name and role for display. The session cookie
+ * holds only the id and role, so the name is read from the database.
+ * Returns null when no valid session exists.
+ */
+export const getCurrentUserProfile = createServerFn({ method: 'GET' }).handler(
+  async (): Promise<UserProfile | null> => {
+    const session = await getSessionUser()
+    if (!session) return null
+    return prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { name: true, role: true },
+    })
+  },
 )
 
 /**
