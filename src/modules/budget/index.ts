@@ -5,6 +5,20 @@
 
 export { uploadLRA, type UploadResult } from './server/upload-lra'
 export { getUploadHistory } from './server/upload-history'
+export {
+  uploadPendapatanLRA,
+  getPendapatanUploadHistory,
+} from './server/upload-lra-pendapatan'
+export { getPendapatanSummary } from './server/aggregate-pendapatan-summary'
+export { getPendapatanByKelompok } from './server/aggregate-pendapatan-by-kelompok'
+export {
+  getPendapatanKelompokDetail,
+  type PendapatanKelompokDetailResult,
+} from './server/aggregate-pendapatan-kelompok-detail'
+export {
+  getFiscalOverview,
+  type FiscalOverview,
+} from './server/aggregate-fiscal-overview'
 export { getBudgetSummary } from './server/aggregate-summary'
 export { getBudgetByKelompok } from './server/aggregate-by-kelompok'
 export { getTopPrograms } from './server/aggregate-top-programs'
@@ -27,6 +41,10 @@ export type {
   TopPrograms,
   SubBidangAggregate,
 } from './server/aggregations'
+export type {
+  PendapatanSummary,
+  PendapatanLine,
+} from './server/pendapatan-aggregations'
 
 export { SummaryCards } from './components/SummaryCards'
 export { KelompokBelanjaChart } from './components/KelompokBelanjaChart'
@@ -35,3 +53,8 @@ export { BudgetLineTable } from './components/BudgetLineTable'
 export { SubBidangTable } from './components/SubBidangTable'
 export { SubKegiatanTable } from './components/SubKegiatanTable'
 export { SubKegiatanDetail } from './components/SubKegiatanDetail'
+export { FiscalOverviewCards } from './components/FiscalOverviewCards'
+export { ApbdComparisonChart } from './components/ApbdComparisonChart'
+export { PendapatanSummaryCards } from './components/PendapatanSummaryCards'
+export { PendapatanKelompokTable } from './components/PendapatanKelompokTable'
+export { PendapatanKelompokDetail } from './components/PendapatanKelompokDetail'

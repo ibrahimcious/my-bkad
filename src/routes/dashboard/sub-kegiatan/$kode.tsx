@@ -21,10 +21,10 @@ function SubKegiatanDetailPage() {
   return (
     <div className="space-y-6">
       <Link
-        to="/dashboard"
+        to="/dashboard/belanja"
         className="inline-flex text-sm text-steel transition-colors hover:text-obsidian"
       >
-        ← Kembali ke ringkasan
+        ← Kembali ke Belanja
       </Link>
       <SubKegiatanDetail detail={detail} />
     </div>

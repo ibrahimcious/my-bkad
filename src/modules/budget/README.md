@@ -24,7 +24,17 @@ Prisma models (see `prisma/schema.prisma`), all prefixed `Budget`:
   with the row's `level` recorded. Each row carries an Anggaran and a
   Realisasi amount for all four Kelompok Belanja (Operasi, Modal, Tak
   Terduga, Transfer).
-- `BudgetUploadHistory` — audit record of every upload attempt.
+- `BudgetPendapatanRealization` — one row per stored Pendapatan LRA line,
+  linked by `parentKode`, with the row's `level` recorded. Carries one
+  Anggaran, one Realisasi, and the prior year's Realisasi.
+- `BudgetUploadHistory` — audit record of every belanja LRA upload.
+- `BudgetPendapatanUploadHistory` — audit record of every Pendapatan LRA
+  upload, kept separate so each pipeline's history is independent.
+- `BudgetKabupatenBelanja` / `BudgetKabupatenPembiayaan` — single-row
+  tables holding the kabupaten-wide Belanja and Pembiayaan grand totals
+  (the account-5 and account-6 roots of the full LRA file), captured on
+  Pendapatan upload. They give the dashboard overview the three APBD
+  components alongside Pendapatan.
 - `BudgetSubBidangMapping` — maps each Sub Kegiatan to a Sub Bidang (U7).
   Reference data, keyed by the stable `subKegiatanKode`, so it survives
   the `BudgetRealization` full refresh.
@@ -125,6 +135,33 @@ KEGIATAN → PROGRAM, SUB_KEGIATAN → KEGIATAN, REKENING → SUB_KEGIATAN.
   drill-down is out of scope for v1.
 - A row with a code in an unexpected column/depth is skipped with a
   warning (surfaced in upload history and logs), and parsing continues.
+
+## Pendapatan LRA format
+
+Pendapatan (revenue) comes from a **different** SIPD export — a full LRA
+report covering Pendapatan, Belanja, and Pembiayaan. The canonical sample
+is `docs/samples/LRA Pendapatan-18-5-2026.xlsx`. Only the Pendapatan
+section is parsed (`server/parse-lra-pendapatan.ts`, tests in
+`tests/modules/budget/parse-lra-pendapatan.test.ts`); the belanja parser
+is unrelated and stays as-is.
+
+It differs from the belanja recap in three ways that matter:
+
+- **Single-column code.** The `kode` is one column (A), holding the full
+  dotted code at every tier — no spread across A–D. The level follows
+  directly from segment depth: `4`→`PENDAPATAN`, `4.1`→`KELOMPOK`,
+  `4.1.01`→`JENIS`, `4.1.01.09`→`OBYEK`, `4.1.01.09.01`→`RINCIAN_OBYEK`,
+  `4.1.01.09.01.0001`→`SUB_RINCIAN_OBYEK`. `parentKode` is the code minus
+  its last segment.
+- **One Anggaran / Realisasi pair**, not eight. Columns: A `kode`,
+  B `uraian`, C `Anggaran`, D `Realisasi`, E `%` (derived, ignored),
+  F `Realisasi` of the prior year (`realisasiPrevYear`).
+- **Numeric amount cells.** This report stores amounts as native numbers,
+  not Indonesian-locale text — but `parseAmount` handles both.
+
+The parser keeps only account group `4`. Belanja (`5`), Pembiayaan (`6`),
+`JUMLAH …` subtotal rows (blank code), `SURPLUS/DEFISIT`, and the title /
+signature rows are all skipped.
 
 ## Sub Bidang mapping (U7)
 
