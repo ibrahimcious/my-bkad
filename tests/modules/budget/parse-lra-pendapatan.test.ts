@@ -47,7 +47,7 @@ const SUB_RINCIAN = ['4.1.01.09.01.0001', 'Pajak Reklame Papan', 200, 50, 25, 18
 
 describe('parsePendapatanLRA — happy path', () => {
   it('parses one row per hierarchy level with linked parent codes', () => {
-    const { rows } = parsePendapatanLRA(
+    const { rows, belanjaTotal } = parsePendapatanLRA(
       pendapatanWorkbook([
         PENDAPATAN,
         KELOMPOK,
@@ -58,6 +58,7 @@ describe('parsePendapatanLRA — happy path', () => {
       ]),
     )
 
+    expect(belanjaTotal).toBeNull()
     expect(rows.map((r) => r.level)).toEqual([
       'PENDAPATAN',
       'KELOMPOK',
@@ -83,13 +84,18 @@ describe('parsePendapatanLRA — happy path', () => {
     })
   })
 
-  it('ignores Belanja and Pembiayaan rows (account groups 5 and 6)', () => {
+  it('keeps only Pendapatan rows and captures the kabupaten Belanja total', () => {
     const belanja = ['5', 'BELANJA DAERAH', 5000, 1000, 20, 4000]
     const pembiayaan = ['6', 'PEMBIAYAAN DAERAH', 800, 100, 12.5, 700]
-    const { rows } = parsePendapatanLRA(
+    const { rows, belanjaTotal } = parsePendapatanLRA(
       pendapatanWorkbook([PENDAPATAN, belanja, pembiayaan]),
     )
     expect(rows.map((r) => r.kode)).toEqual(['4'])
+    expect(belanjaTotal).toEqual({
+      anggaran: 5000,
+      realisasi: 1000,
+      realisasiPrevYear: 4000,
+    })
   })
 
   it('skips JUMLAH subtotal rows (blank code column)', () => {
@@ -133,7 +139,7 @@ describe('parsePendapatanLRA — real sample', () => {
   const sample = readFileSync('docs/samples/LRA Pendapatan-18-5-2026.xlsx')
 
   it('parses the real Pendapatan LRA end-to-end', () => {
-    const { rows } = parsePendapatanLRA(sample)
+    const { rows, belanjaTotal } = parsePendapatanLRA(sample)
     expect(rows.length).toBeGreaterThan(300)
 
     const root = rows.filter((r) => r.level === 'PENDAPATAN')
@@ -142,7 +148,11 @@ describe('parsePendapatanLRA — real sample', () => {
     expect(root[0]?.anggaran).toBe(2313980268815.5)
     expect(root[0]?.realisasiPrevYear).toBe(3058731479777.88)
 
-    // Belanja and Pembiayaan sections are excluded.
+    // Belanja and Pembiayaan sections are excluded from `rows`.
     expect(rows.every((r) => r.kode.split('.')[0] === '4')).toBe(true)
+
+    // The kabupaten Belanja grand total is captured from the 5 root.
+    expect(belanjaTotal).not.toBeNull()
+    expect(belanjaTotal?.anggaran).toBeGreaterThan(0)
   })
 })

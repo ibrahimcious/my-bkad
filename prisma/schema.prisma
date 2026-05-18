@@ -141,6 +141,19 @@ model BudgetPendapatanUploadHistory {
   @@index([uploadedAt])
 }
 
+/// Kabupaten-wide Belanja grand total, taken from the account-5 root of
+/// the full LRA file uploaded for Pendapatan. It lets the dashboard
+/// overview compute a Surplus/Defisit against kabupaten Pendapatan —
+/// the per-OPD belanja in BudgetRealization is a different (BKAD-only)
+/// scope. A single row, replaced on every Pendapatan upload.
+model BudgetKabupatenBelanja {
+  id                String   @id @default(cuid())
+  anggaran          Decimal  @default(0) @db.Decimal(18, 2)
+  realisasi         Decimal  @default(0) @db.Decimal(18, 2)
+  realisasiPrevYear Decimal  @default(0) @db.Decimal(18, 2)
+  createdAt         DateTime @default(now())
+}
+
 /// Maps each Sub Kegiatan to the BKAD Sub Bidang that owns it (U7).
 /// Reference data, maintained separately from the LRA: keyed by the
 /// stable `subKegiatanKode`, it survives the BudgetRealization full

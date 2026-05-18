@@ -1,36 +1,23 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import {
-  KelompokBelanjaChart,
-  SubKegiatanTable,
-  SummaryCards,
-  getBudgetByKelompok,
-  getBudgetSummary,
-  getSubKegiatanLines,
-} from '@/modules/budget'
+import { FiscalOverviewCards, getFiscalOverview } from '@/modules/budget'
 import { formatDateID } from '@/shared/lib/format'
 
 export const Route = createFileRoute('/dashboard/')({
-  loader: async () => {
-    const [summary, byKelompok, subKegiatan] = await Promise.all([
-      getBudgetSummary(),
-      getBudgetByKelompok(),
-      getSubKegiatanLines(),
-    ])
-    return { summary, byKelompok, subKegiatan }
-  },
-  component: DashboardPage,
-  pendingComponent: DashboardPending,
+  loader: () => getFiscalOverview(),
+  component: OverviewPage,
+  pendingComponent: OverviewPending,
 })
 
-function DashboardPage() {
-  const { summary, byKelompok, subKegiatan } = Route.useLoaderData()
+function OverviewPage() {
+  const overview = Route.useLoaderData()
 
-  if (summary.lastUpdatedAt === null) {
+  if (overview.lastUpdatedAt === null) {
     return (
       <div className="rounded-card border border-fog bg-snow p-10 text-center">
         <p className="text-sm text-steel">
-          Belum ada data LRA. Silakan unggah berkas pada halaman administrasi.
+          Belum ada data LRA Pendapatan. Unggah berkas LRA pada halaman
+          administrasi untuk melihat ringkasan APBD.
         </p>
       </div>
     )
@@ -40,24 +27,19 @@ function DashboardPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-obsidian">
-          Ringkasan Realisasi Anggaran
+          Ringkasan APBD
         </h1>
         <p className="mt-1 text-sm text-steel">
-          Terakhir diperbarui:{' '}
-          {formatDateID(new Date(summary.lastUpdatedAt))}
+          Terakhir diperbarui: {formatDateID(new Date(overview.lastUpdatedAt))}
         </p>
       </div>
 
-      <SummaryCards summary={summary} />
-
-      <KelompokBelanjaChart data={byKelompok} />
-
-      <SubKegiatanTable lines={subKegiatan} />
+      <FiscalOverviewCards overview={overview} />
     </div>
   )
 }
 
-function DashboardPending() {
+function OverviewPending() {
   return (
     <div className="space-y-6">
       <div className="h-12 w-72 animate-pulse rounded-card bg-fog" />
@@ -66,8 +48,6 @@ function DashboardPending() {
           <div key={index} className="h-24 animate-pulse rounded-card bg-fog" />
         ))}
       </div>
-      <div className="h-80 animate-pulse rounded-card bg-fog" />
-      <div className="h-96 animate-pulse rounded-card bg-fog" />
     </div>
   )
 }

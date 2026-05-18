@@ -6,12 +6,24 @@ import { LRAParseError } from '@/shared/lib/errors'
 import { type PendapatanRow, pendapatanRowSchema } from '../schema'
 import { parseAmount } from './parse-amount'
 
+/** The kabupaten-wide Belanja grand total — the account-5 root row. */
+export interface LraBelanjaTotal {
+  anggaran: number
+  realisasi: number
+  realisasiPrevYear: number
+}
+
 /** Outcome of parsing the Pendapatan section of an LRA workbook. */
 export interface ParsedPendapatan {
-  /** Validated rows, ready to persist. */
+  /** Validated Pendapatan rows, ready to persist. */
   rows: PendapatanRow[]
   /** Bahasa Indonesia notes about rows skipped while parsing. */
   warnings: string[]
+  /**
+   * Kabupaten Belanja grand total from the file's account-5 root, used
+   * by the dashboard overview. Null when the file has no Belanja section.
+   */
+  belanjaTotal: LraBelanjaTotal | null
 }
 
 /**
@@ -30,16 +42,28 @@ const COL_REALISASI_PREV = 5
 const CODE_PATTERN = /^\d+(?:\.\d+)*$/
 
 /**
- * The file is a full LRA (Pendapatan, Belanja, Pembiayaan). Only
- * account group `4` — Pendapatan — is parsed here; `5` and `6` belong
- * to other reports.
+ * The file is a full LRA (Pendapatan, Belanja, Pembiayaan). Account
+ * group `4` — Pendapatan — is parsed in full; the `5` root is captured
+ * as the kabupaten Belanja total; everything else is skipped.
  */
 const PENDAPATAN_SEGMENT = '4'
+const BELANJA_ROOT = '5'
 
 function cellText(cell: unknown): string {
   if (typeof cell === 'string') return cell.trim()
   if (typeof cell === 'number' && Number.isFinite(cell)) return String(cell)
   return ''
+}
+
+/** Read the three amount columns of a row; null if any is unreadable. */
+function readAmounts(row: unknown[]): LraBelanjaTotal | null {
+  const anggaran = parseAmount(row[COL_ANGGARAN])
+  const realisasi = parseAmount(row[COL_REALISASI])
+  const realisasiPrevYear = parseAmount(row[COL_REALISASI_PREV])
+  if (anggaran === null || realisasi === null || realisasiPrevYear === null) {
+    return null
+  }
+  return { anggaran, realisasi, realisasiPrevYear }
 }
 
 /**
@@ -87,13 +111,14 @@ function validateHeaders(rows: unknown[][]): void {
 
 /**
  * Parse the Pendapatan section of an LRA Excel export into validated
- * rows.
+ * rows, and capture the kabupaten Belanja grand total.
  *
  * The function is pure — it persists nothing and logs nothing. Rows
- * outside account group `4` (Belanja, Pembiayaan), JUMLAH subtotal
- * rows, and title/header rows are skipped silently; rows skipped for
- * bad data are reported via `warnings`. Throws {@link LRAParseError}
- * when the file cannot be read or yields no usable Pendapatan data.
+ * outside account group `4` (Belanja detail, Pembiayaan), JUMLAH
+ * subtotal rows, and title/header rows are skipped silently; rows
+ * skipped for bad data are reported via `warnings`. Throws
+ * {@link LRAParseError} when the file cannot be read or yields no
+ * usable Pendapatan data.
  */
 export function parsePendapatanLRA(
   input: ArrayBuffer | Uint8Array,
@@ -128,6 +153,7 @@ export function parsePendapatanLRA(
 
   const parsed: PendapatanRow[] = []
   const warnings: string[] = []
+  let belanjaTotal: LraBelanjaTotal | null = null
 
   for (const row of rows) {
     // Title, header, column-numbering, JUMLAH-subtotal and signature
@@ -135,7 +161,13 @@ export function parsePendapatanLRA(
     const kode = cellText(row[COL_KODE])
     if (!CODE_PATTERN.test(kode)) continue
 
-    // Keep only the Pendapatan section; skip Belanja and Pembiayaan.
+    // Capture the kabupaten-wide Belanja grand total (account-5 root).
+    if (kode === BELANJA_ROOT) {
+      belanjaTotal = readAmounts(row) ?? belanjaTotal
+      continue
+    }
+
+    // Keep only the Pendapatan section; skip Belanja detail and Pembiayaan.
     if (kode.split('.')[0] !== PENDAPATAN_SEGMENT) continue
 
     const uraian = cellText(row[COL_URAIAN])
@@ -154,29 +186,15 @@ export function parsePendapatanLRA(
     // segment. The depth-1 root (`4`) has no parent.
     const parentKode = depth > 1 ? kode.slice(0, kode.lastIndexOf('.')) : null
 
-    const anggaran = parseAmount(row[COL_ANGGARAN])
-    const realisasi = parseAmount(row[COL_REALISASI])
-    const realisasiPrevYear = parseAmount(row[COL_REALISASI_PREV])
-    if (
-      anggaran === null ||
-      realisasi === null ||
-      realisasiPrevYear === null
-    ) {
+    const amounts = readAmounts(row)
+    if (!amounts) {
       warnings.push(
         `Baris dengan kode "${kode}" dilewati karena nilai rupiah tidak dapat dibaca.`,
       )
       continue
     }
 
-    const candidate = {
-      kode,
-      parentKode,
-      level,
-      uraian,
-      anggaran,
-      realisasi,
-      realisasiPrevYear,
-    }
+    const candidate = { kode, parentKode, level, uraian, ...amounts }
 
     const validated = pendapatanRowSchema.safeParse(candidate)
     if (!validated.success) {
@@ -194,5 +212,5 @@ export function parsePendapatanLRA(
     )
   }
 
-  return { rows: parsed, warnings }
+  return { rows: parsed, warnings, belanjaTotal }
 }
