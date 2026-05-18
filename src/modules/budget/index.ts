@@ -12,6 +12,10 @@ export {
 export { getPendapatanSummary } from './server/aggregate-pendapatan-summary'
 export { getPendapatanByKelompok } from './server/aggregate-pendapatan-by-kelompok'
 export {
+  getPendapatanKelompokDetail,
+  type PendapatanKelompokDetailResult,
+} from './server/aggregate-pendapatan-kelompok-detail'
+export {
   getFiscalOverview,
   type FiscalOverview,
 } from './server/aggregate-fiscal-overview'
@@ -39,7 +43,7 @@ export type {
 } from './server/aggregations'
 export type {
   PendapatanSummary,
-  PendapatanKelompokBreakdown,
+  PendapatanLine,
 } from './server/pendapatan-aggregations'
 
 export { SummaryCards } from './components/SummaryCards'
@@ -53,3 +57,4 @@ export { FiscalOverviewCards } from './components/FiscalOverviewCards'
 export { ApbdComparisonChart } from './components/ApbdComparisonChart'
 export { PendapatanSummaryCards } from './components/PendapatanSummaryCards'
 export { PendapatanKelompokTable } from './components/PendapatanKelompokTable'
+export { PendapatanKelompokDetail } from './components/PendapatanKelompokDetail'

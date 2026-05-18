@@ -8,7 +8,7 @@ import {
 } from '@/modules/budget'
 import { formatDateID } from '@/shared/lib/format'
 
-export const Route = createFileRoute('/dashboard/pendapatan')({
+export const Route = createFileRoute('/dashboard/pendapatan/')({
   loader: async () => {
     const [summary, byKelompok] = await Promise.all([
       getPendapatanSummary(),

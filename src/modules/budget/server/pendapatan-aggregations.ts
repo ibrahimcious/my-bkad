@@ -70,15 +70,31 @@ export function summarizePendapatan(
   }
 }
 
-// --- Breakdown by Kelompok ----------------------------------------------
+// --- Pendapatan lines ----------------------------------------------------
 
-export interface PendapatanKelompokBreakdown {
+/** A Pendapatan row at any hierarchy level, rolled up to its totals. */
+export interface PendapatanLine {
   kode: string
-  /** Bahasa Indonesia display label (e.g. "PENDAPATAN ASLI DAERAH (PAD)"). */
+  /** Bahasa Indonesia display label. */
   uraian: string
   anggaran: number
   realisasi: number
   persentaseCapaian: number
+}
+
+/** Roll a Pendapatan row's amounts up into a {@link PendapatanLine}. */
+export function toPendapatanLine(
+  kode: string,
+  uraian: string,
+  amounts: PendapatanAmounts,
+): PendapatanLine {
+  return {
+    kode,
+    uraian,
+    anggaran: amounts.anggaran,
+    realisasi: amounts.realisasi,
+    persentaseCapaian: capaianPercent(amounts.anggaran, amounts.realisasi),
+  }
 }
 
 /**
@@ -87,14 +103,8 @@ export interface PendapatanKelompokBreakdown {
  */
 export function breakdownPendapatanByKelompok(
   kelompok: { kode: string; uraian: string; amounts: PendapatanAmounts }[],
-): PendapatanKelompokBreakdown[] {
+): PendapatanLine[] {
   return kelompok
-    .map(({ kode, uraian, amounts }) => ({
-      kode,
-      uraian,
-      anggaran: amounts.anggaran,
-      realisasi: amounts.realisasi,
-      persentaseCapaian: capaianPercent(amounts.anggaran, amounts.realisasi),
-    }))
+    .map(({ kode, uraian, amounts }) => toPendapatanLine(kode, uraian, amounts))
     .sort((a, b) => b.anggaran - a.anggaran)
 }

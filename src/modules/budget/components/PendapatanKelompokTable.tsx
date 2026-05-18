@@ -1,19 +1,24 @@
+import { useNavigate } from '@tanstack/react-router'
+
 import { formatIDR } from '@/shared/lib/format'
 
-import type { PendapatanKelompokBreakdown } from '../server/pendapatan-aggregations'
+import type { PendapatanLine } from '../server/pendapatan-aggregations'
 
 interface PendapatanKelompokTableProps {
-  rows: PendapatanKelompokBreakdown[]
+  rows: PendapatanLine[]
 }
 
 /**
  * Pendapatan totalled per Kelompok (PAD, Pendapatan Transfer, …). A
  * table rather than a chart: the kelompok differ by orders of
- * magnitude, so bars would be unreadable.
+ * magnitude, so bars would be unreadable. Clicking a row opens that
+ * Kelompok's Jenis-level detail.
  */
 export function PendapatanKelompokTable({
   rows,
 }: PendapatanKelompokTableProps) {
+  const navigate = useNavigate()
+
   return (
     <div className="rounded-card border border-fog bg-snow p-6">
       <h2 className="text-sm font-semibold tracking-tight text-obsidian">
@@ -40,7 +45,16 @@ export function PendapatanKelompokTable({
             </thead>
             <tbody>
               {rows.map((row) => (
-                <tr key={row.kode} className="border-b border-fog">
+                <tr
+                  key={row.kode}
+                  onClick={() =>
+                    navigate({
+                      to: '/dashboard/pendapatan/$kode',
+                      params: { kode: row.kode },
+                    })
+                  }
+                  className="cursor-pointer border-b border-fog transition-colors hover:bg-mist"
+                >
                   <td className="py-1.5 pr-4 text-ink">{row.uraian}</td>
                   <td className="py-1.5 pr-4 tabular-nums whitespace-nowrap text-ink">
                     {formatIDR(row.anggaran)}

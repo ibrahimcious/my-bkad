@@ -3,7 +3,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { prisma } from '@/shared/db'
 
 import {
-  type PendapatanKelompokBreakdown,
+  type PendapatanLine,
   breakdownPendapatanByKelompok,
   toPendapatanAmounts,
 } from './pendapatan-aggregations'
@@ -15,7 +15,7 @@ import {
  */
 export const getPendapatanByKelompok = createServerFn({
   method: 'GET',
-}).handler(async (): Promise<PendapatanKelompokBreakdown[]> => {
+}).handler(async (): Promise<PendapatanLine[]> => {
   const rows = await prisma.budgetPendapatanRealization.findMany({
     where: { level: 'KELOMPOK' },
   })
