@@ -40,8 +40,10 @@ Prisma models (see `prisma/schema.prisma`), all prefixed `Budget`:
 
 Each LRA upload is a full refresh: the prior dataset is deleted and
 replaced, inside a single transaction. Every upload pipeline runs through
-the shared `createUploadFn` handler (`server/upload-handler.ts`), which owns
-the role gate, transaction, history write, and error mapping.
+the shared `runUpload` helper (`server/upload-handler.ts`), which owns the
+role gate, transaction, history write, and error mapping. Each upload file
+wraps it in a module-scope `createServerFn().handler()` so the TanStack
+Start compiler can strip the server-only body from the client bundle.
 
 ## Public API
 
