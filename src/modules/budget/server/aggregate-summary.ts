@@ -14,7 +14,7 @@ export const getBudgetSummary = createServerFn({ method: 'GET' }).handler(
     const [unsur, latestUpload] = await Promise.all([
       prisma.budgetRealization.findFirst({ where: { level: 'UNSUR' } }),
       prisma.budgetUploadHistory.findFirst({
-        where: { status: 'SUCCESS' },
+        where: { status: 'SUCCESS', kind: 'BELANJA' },
         orderBy: { uploadedAt: 'desc' },
       }),
     ])

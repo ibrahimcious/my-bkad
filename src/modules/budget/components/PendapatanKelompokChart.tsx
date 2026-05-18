@@ -12,41 +12,30 @@ import {
 
 import { formatIDR, formatIDRCompact } from '@/shared/lib/format'
 
-import type { KelompokBelanjaBreakdown } from '../server/aggregations'
+import type { PendapatanLine } from '../server/pendapatan-aggregations'
 
-interface KelompokBelanjaChartProps {
-  data: KelompokBelanjaBreakdown[]
+interface PendapatanKelompokChartProps {
+  data: PendapatanLine[]
 }
 
 /**
- * Grouped bar chart: Anggaran vs Realisasi per Kelompok Belanja.
+ * Grouped bar chart: Anggaran vs Realisasi per Kelompok Pendapatan.
+ * Each Realisasi bar is labelled with its capaian percentage.
  *
- * Belanja Transfer and Tak Terduga are excluded — Transfer dwarfs the
- * other kelompok and Tak Terduga is contingency spending; both skew the
- * Operasi / Modal comparison. Their figures stay in the summary cards.
- *
- * Each Realisasi bar is labelled with its serapan percentage — the
- * categories are independent, so no connecting line is drawn between
- * them (a line would wrongly read as a trend over time).
+ * The kelompok differ by orders of magnitude (Pendapatan Transfer
+ * dwarfs PAD), so a small kelompok reads as a near-flat bar — the table
+ * below carries the exact figures.
  */
-export function KelompokBelanjaChart({ data }: KelompokBelanjaChartProps) {
-  const chartData = data.filter(
-    (d) => d.kelompok !== 'Transfer' && d.kelompok !== 'Tak Terduga',
-  )
-  const isEmpty = chartData.every(
-    (d) => d.anggaran === 0 && d.realisasi === 0,
-  )
+export function PendapatanKelompokChart({
+  data,
+}: PendapatanKelompokChartProps) {
+  const isEmpty = data.every((d) => d.anggaran === 0 && d.realisasi === 0)
 
   return (
     <div className="rounded-card border border-fog bg-snow p-6">
-      <div className="flex items-baseline justify-between gap-4">
-        <h2 className="text-sm font-semibold tracking-tight text-obsidian">
-          Anggaran dan Realisasi per Kelompok Belanja
-        </h2>
-        <span className="shrink-0 text-xs text-steel">
-          Belanja Transfer dan Tak Terduga dikecualikan
-        </span>
-      </div>
+      <h2 className="text-sm font-semibold tracking-tight text-obsidian">
+        Anggaran dan Realisasi per Kelompok Pendapatan
+      </h2>
       {isEmpty ? (
         <div className="mt-4 flex h-72 items-center justify-center">
           <p className="text-sm text-steel">Belum ada data.</p>
@@ -55,7 +44,7 @@ export function KelompokBelanjaChart({ data }: KelompokBelanjaChartProps) {
         <div className="mt-6 h-72">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={chartData}
+              data={data}
               barGap={8}
               barCategoryGap="32%"
               margin={{ top: 24, right: 8, bottom: 0, left: 8 }}
@@ -66,7 +55,7 @@ export function KelompokBelanjaChart({ data }: KelompokBelanjaChartProps) {
                 stroke="#ececee"
               />
               <XAxis
-                dataKey="kelompok"
+                dataKey="uraian"
                 tickLine={false}
                 axisLine={{ stroke: '#ececee' }}
                 tick={{ fontSize: 12, fill: '#71717a' }}
@@ -89,7 +78,6 @@ export function KelompokBelanjaChart({ data }: KelompokBelanjaChartProps) {
                 }}
                 labelStyle={{ color: '#09090b', fontWeight: 600 }}
                 formatter={(value, name) => {
-                  // Recharts types `value` as ValueType | undefined.
                   const amount =
                     typeof value === 'number' ? value : Number(value) || 0
                   return [formatIDR(amount), name]
@@ -115,7 +103,7 @@ export function KelompokBelanjaChart({ data }: KelompokBelanjaChartProps) {
                 maxBarSize={64}
               >
                 <LabelList
-                  dataKey="persentaseSerapan"
+                  dataKey="persentaseCapaian"
                   position="top"
                   fill="#3f3f46"
                   fontSize={11}

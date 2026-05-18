@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 
 import {
+  PendapatanKelompokChart,
   PendapatanKelompokTable,
   PendapatanSummaryCards,
   getPendapatanByKelompok,
@@ -46,6 +47,8 @@ function PendapatanDashboard() {
       </div>
 
       <PendapatanSummaryCards summary={summary} />
+
+      <PendapatanKelompokChart data={byKelompok} />
 
       <PendapatanKelompokTable rows={byKelompok} />
     </div>

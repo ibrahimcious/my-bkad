@@ -16,8 +16,8 @@ const ZERO = { anggaran: 0, realisasi: 0 }
 /**
  * Kabupaten-wide Pendapatan, Belanja, and Pembiayaan totals — the three
  * APBD components — all taken from the same full LRA file. Pendapatan
- * is the account-4 root; Belanja and Pembiayaan are the account-5 and
- * account-6 roots captured into their tables on upload.
+ * is the account-4 root; Belanja and Pembiayaan are the section totals
+ * captured into BudgetKabupatenLraTotal on upload.
  *
  * Note this Belanja is kabupaten-wide and distinct from the per-OPD
  * (BKAD-only) belanja in BudgetRealization that the Belanja dashboard
@@ -25,18 +25,22 @@ const ZERO = { anggaran: 0, realisasi: 0 }
  */
 export const getFiscalOverview = createServerFn({ method: 'GET' }).handler(
   async (): Promise<FiscalOverview> => {
-    const [pendapatanRoot, belanja, pembiayaan, latestUpload] =
-      await Promise.all([
-        prisma.budgetPendapatanRealization.findFirst({
-          where: { level: 'PENDAPATAN' },
-        }),
-        prisma.budgetKabupatenBelanja.findFirst(),
-        prisma.budgetKabupatenPembiayaan.findFirst(),
-        prisma.budgetPendapatanUploadHistory.findFirst({
-          where: { status: 'SUCCESS' },
-          orderBy: { uploadedAt: 'desc' },
-        }),
-      ])
+    const [pendapatanRoot, sectionTotals, latestUpload] = await Promise.all([
+      prisma.budgetPendapatanRealization.findFirst({
+        where: { level: 'PENDAPATAN' },
+      }),
+      prisma.budgetKabupatenLraTotal.findMany(),
+      prisma.budgetUploadHistory.findFirst({
+        where: { status: 'SUCCESS', kind: 'PENDAPATAN' },
+        orderBy: { uploadedAt: 'desc' },
+      }),
+    ])
+
+    const belanja = sectionTotals.find((total) => total.section === 'BELANJA')
+    const pembiayaan = sectionTotals.find(
+      (total) => total.section === 'PEMBIAYAAN',
+    )
+
     return {
       pendapatan: pendapatanRoot
         ? {

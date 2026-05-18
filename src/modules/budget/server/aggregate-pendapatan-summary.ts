@@ -20,8 +20,8 @@ export const getPendapatanSummary = createServerFn({ method: 'GET' }).handler(
       prisma.budgetPendapatanRealization.findFirst({
         where: { level: 'PENDAPATAN' },
       }),
-      prisma.budgetPendapatanUploadHistory.findFirst({
-        where: { status: 'SUCCESS' },
+      prisma.budgetUploadHistory.findFirst({
+        where: { status: 'SUCCESS', kind: 'PENDAPATAN' },
         orderBy: { uploadedAt: 'desc' },
       }),
     ])

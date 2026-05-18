@@ -1,13 +1,13 @@
 import { type FormEvent, useRef, useState } from 'react'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 
-import { getPendapatanUploadHistory, uploadPendapatanLRA } from '@/modules/budget'
+import { getUploadHistory, uploadPendapatanLRA } from '@/modules/budget'
 import { formatDateID } from '@/shared/lib/format'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 
 export const Route = createFileRoute('/admin/upload-pendapatan/')({
-  loader: () => getPendapatanUploadHistory(),
+  loader: () => getUploadHistory({ data: 'PENDAPATAN' }),
   component: UploadPendapatanPage,
 })
 

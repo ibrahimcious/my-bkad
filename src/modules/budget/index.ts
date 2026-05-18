@@ -3,12 +3,10 @@
 // Routes and other consumers import budget functionality only from this
 // file — never from internal paths like `@/modules/budget/server/*`.
 
-export { uploadLRA, type UploadResult } from './server/upload-lra'
+export { uploadLRA } from './server/upload-lra'
+export { type UploadResult } from './server/upload-handler'
 export { getUploadHistory } from './server/upload-history'
-export {
-  uploadPendapatanLRA,
-  getPendapatanUploadHistory,
-} from './server/upload-lra-pendapatan'
+export { uploadPendapatanLRA } from './server/upload-lra-pendapatan'
 export { getPendapatanSummary } from './server/aggregate-pendapatan-summary'
 export { getPendapatanByKelompok } from './server/aggregate-pendapatan-by-kelompok'
 export {
@@ -31,7 +29,6 @@ export { getRealisasiBySubBidang } from './server/aggregate-sub-bidang'
 export {
   uploadSubBidangMapping,
   getSubBidangMapping,
-  type SubBidangUploadResult,
 } from './server/upload-subbidang'
 export type {
   BudgetSummary,
@@ -56,5 +53,6 @@ export { SubKegiatanDetail } from './components/SubKegiatanDetail'
 export { FiscalOverviewCards } from './components/FiscalOverviewCards'
 export { ApbdComparisonChart } from './components/ApbdComparisonChart'
 export { PendapatanSummaryCards } from './components/PendapatanSummaryCards'
+export { PendapatanKelompokChart } from './components/PendapatanKelompokChart'
 export { PendapatanKelompokTable } from './components/PendapatanKelompokTable'
 export { PendapatanKelompokDetail } from './components/PendapatanKelompokDetail'
