@@ -1,6 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import { FiscalOverviewCards, getFiscalOverview } from '@/modules/budget'
+import {
+  ApbdComparisonChart,
+  FiscalOverviewCards,
+  getFiscalOverview,
+} from '@/modules/budget'
 import { formatDateID } from '@/shared/lib/format'
 
 export const Route = createFileRoute('/dashboard/')({
@@ -35,6 +39,8 @@ function OverviewPage() {
       </div>
 
       <FiscalOverviewCards overview={overview} />
+
+      <ApbdComparisonChart overview={overview} />
     </div>
   )
 }
@@ -48,6 +54,7 @@ function OverviewPending() {
           <div key={index} className="h-24 animate-pulse rounded-card bg-fog" />
         ))}
       </div>
+      <div className="h-80 animate-pulse rounded-card bg-fog" />
     </div>
   )
 }
