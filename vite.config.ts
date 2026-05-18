@@ -11,6 +11,10 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    // Allow the dev server to be reached through a Cloudflare quick
+    // tunnel (temporary, for remote testing only — see docs/deploy.md
+    // for the real deployment path).
+    allowedHosts: ['.trycloudflare.com'],
   },
   plugins: [tailwindcss(), tanstackStart()],
 })
