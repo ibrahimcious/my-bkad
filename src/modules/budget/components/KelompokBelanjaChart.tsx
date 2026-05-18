@@ -21,16 +21,18 @@ interface KelompokBelanjaChartProps {
 /**
  * Grouped bar chart: Anggaran vs Realisasi per Kelompok Belanja.
  *
- * Belanja Transfer is excluded — its budget is an order of magnitude
- * larger than Operasi / Modal / Tak Terduga and would flatten every
- * other bar. The Transfer figure stays in the summary cards.
+ * Belanja Transfer and Tak Terduga are excluded — Transfer dwarfs the
+ * other kelompok and Tak Terduga is contingency spending; both skew the
+ * Operasi / Modal comparison. Their figures stay in the summary cards.
  *
  * Each Realisasi bar is labelled with its serapan percentage — the
  * categories are independent, so no connecting line is drawn between
  * them (a line would wrongly read as a trend over time).
  */
 export function KelompokBelanjaChart({ data }: KelompokBelanjaChartProps) {
-  const chartData = data.filter((d) => d.kelompok !== 'Transfer')
+  const chartData = data.filter(
+    (d) => d.kelompok !== 'Transfer' && d.kelompok !== 'Tak Terduga',
+  )
   const isEmpty = chartData.every(
     (d) => d.anggaran === 0 && d.realisasi === 0,
   )
@@ -42,7 +44,7 @@ export function KelompokBelanjaChart({ data }: KelompokBelanjaChartProps) {
           Anggaran dan Realisasi per Kelompok Belanja
         </h2>
         <span className="shrink-0 text-xs text-steel">
-          Belanja Transfer dikecualikan
+          Belanja Transfer dan Tak Terduga dikecualikan
         </span>
       </div>
       {isEmpty ? (
