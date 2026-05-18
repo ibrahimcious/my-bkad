@@ -154,6 +154,18 @@ model BudgetKabupatenBelanja {
   createdAt         DateTime @default(now())
 }
 
+/// Kabupaten-wide Pembiayaan grand total, taken from the account-6 root
+/// of the full LRA file uploaded for Pendapatan. With Pendapatan and
+/// Belanja it gives the overview the three APBD components. A single
+/// row, replaced on every Pendapatan upload.
+model BudgetKabupatenPembiayaan {
+  id                String   @id @default(cuid())
+  anggaran          Decimal  @default(0) @db.Decimal(18, 2)
+  realisasi         Decimal  @default(0) @db.Decimal(18, 2)
+  realisasiPrevYear Decimal  @default(0) @db.Decimal(18, 2)
+  createdAt         DateTime @default(now())
+}
+
 /// Maps each Sub Kegiatan to the BKAD Sub Bidang that owns it (U7).
 /// Reference data, maintained separately from the LRA: keyed by the
 /// stable `subKegiatanKode`, it survives the BudgetRealization full

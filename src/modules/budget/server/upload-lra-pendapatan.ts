@@ -48,7 +48,8 @@ export const uploadPendapatanLRA = createServerFn({ method: 'POST' })
 
     try {
       const bytes = new Uint8Array(await file.arrayBuffer())
-      const { rows, warnings, belanjaTotal } = parsePendapatanLRA(bytes)
+      const { rows, warnings, belanjaTotal, pembiayaanTotal } =
+        parsePendapatanLRA(bytes)
 
       await prisma.$transaction(async (tx) => {
         await tx.budgetPendapatanRealization.deleteMany({})
@@ -56,6 +57,10 @@ export const uploadPendapatanLRA = createServerFn({ method: 'POST' })
         await tx.budgetKabupatenBelanja.deleteMany({})
         if (belanjaTotal) {
           await tx.budgetKabupatenBelanja.create({ data: belanjaTotal })
+        }
+        await tx.budgetKabupatenPembiayaan.deleteMany({})
+        if (pembiayaanTotal) {
+          await tx.budgetKabupatenPembiayaan.create({ data: pembiayaanTotal })
         }
         await tx.budgetPendapatanUploadHistory.create({
           data: {

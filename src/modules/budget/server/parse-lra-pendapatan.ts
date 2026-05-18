@@ -6,8 +6,11 @@ import { LRAParseError } from '@/shared/lib/errors'
 import { type PendapatanRow, pendapatanRowSchema } from '../schema'
 import { parseAmount } from './parse-amount'
 
-/** The kabupaten-wide Belanja grand total — the account-5 root row. */
-export interface LraBelanjaTotal {
+/**
+ * A kabupaten-wide section grand total — an account root row (Belanja
+ * or Pembiayaan) of the full LRA file.
+ */
+export interface LraSectionTotal {
   anggaran: number
   realisasi: number
   realisasiPrevYear: number
@@ -23,7 +26,12 @@ export interface ParsedPendapatan {
    * Kabupaten Belanja grand total from the file's account-5 root, used
    * by the dashboard overview. Null when the file has no Belanja section.
    */
-  belanjaTotal: LraBelanjaTotal | null
+  belanjaTotal: LraSectionTotal | null
+  /**
+   * Kabupaten Pembiayaan grand total from the file's account-6 root.
+   * Null when the file has no Pembiayaan section.
+   */
+  pembiayaanTotal: LraSectionTotal | null
 }
 
 /**
@@ -43,11 +51,13 @@ const CODE_PATTERN = /^\d+(?:\.\d+)*$/
 
 /**
  * The file is a full LRA (Pendapatan, Belanja, Pembiayaan). Account
- * group `4` — Pendapatan — is parsed in full; the `5` root is captured
- * as the kabupaten Belanja total; everything else is skipped.
+ * group `4` — Pendapatan — is parsed in full; the `5` and `6` roots are
+ * captured as the kabupaten Belanja and Pembiayaan totals; everything
+ * else is skipped.
  */
 const PENDAPATAN_SEGMENT = '4'
 const BELANJA_ROOT = '5'
+const PEMBIAYAAN_ROOT = '6'
 
 function cellText(cell: unknown): string {
   if (typeof cell === 'string') return cell.trim()
@@ -56,7 +66,7 @@ function cellText(cell: unknown): string {
 }
 
 /** Read the three amount columns of a row; null if any is unreadable. */
-function readAmounts(row: unknown[]): LraBelanjaTotal | null {
+function readAmounts(row: unknown[]): LraSectionTotal | null {
   const anggaran = parseAmount(row[COL_ANGGARAN])
   const realisasi = parseAmount(row[COL_REALISASI])
   const realisasiPrevYear = parseAmount(row[COL_REALISASI_PREV])
@@ -111,10 +121,10 @@ function validateHeaders(rows: unknown[][]): void {
 
 /**
  * Parse the Pendapatan section of an LRA Excel export into validated
- * rows, and capture the kabupaten Belanja grand total.
+ * rows, and capture the kabupaten Belanja and Pembiayaan grand totals.
  *
  * The function is pure — it persists nothing and logs nothing. Rows
- * outside account group `4` (Belanja detail, Pembiayaan), JUMLAH
+ * outside account group `4` (Belanja detail, Pembiayaan detail), JUMLAH
  * subtotal rows, and title/header rows are skipped silently; rows
  * skipped for bad data are reported via `warnings`. Throws
  * {@link LRAParseError} when the file cannot be read or yields no
@@ -153,7 +163,8 @@ export function parsePendapatanLRA(
 
   const parsed: PendapatanRow[] = []
   const warnings: string[] = []
-  let belanjaTotal: LraBelanjaTotal | null = null
+  let belanjaTotal: LraSectionTotal | null = null
+  let pembiayaanTotal: LraSectionTotal | null = null
 
   for (const row of rows) {
     // Title, header, column-numbering, JUMLAH-subtotal and signature
@@ -161,9 +172,14 @@ export function parsePendapatanLRA(
     const kode = cellText(row[COL_KODE])
     if (!CODE_PATTERN.test(kode)) continue
 
-    // Capture the kabupaten-wide Belanja grand total (account-5 root).
+    // Capture the kabupaten-wide Belanja and Pembiayaan grand totals
+    // (the account-5 and account-6 roots).
     if (kode === BELANJA_ROOT) {
       belanjaTotal = readAmounts(row) ?? belanjaTotal
+      continue
+    }
+    if (kode === PEMBIAYAAN_ROOT) {
+      pembiayaanTotal = readAmounts(row) ?? pembiayaanTotal
       continue
     }
 
@@ -212,5 +228,5 @@ export function parsePendapatanLRA(
     )
   }
 
-  return { rows: parsed, warnings, belanjaTotal }
+  return { rows: parsed, warnings, belanjaTotal, pembiayaanTotal }
 }

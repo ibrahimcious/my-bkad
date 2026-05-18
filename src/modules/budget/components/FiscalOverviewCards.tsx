@@ -8,40 +8,30 @@ interface FiscalOverviewCardsProps {
 
 /**
  * The three headline cards of the APBD overview, all on a budget
- * (Anggaran) basis: Pendapatan, Belanja, and the budgeted
- * Surplus/Defisit between them. Realisation is shown in the chart
- * below — not on the cards — so the two readings stay distinct.
+ * (Anggaran) basis — the three components of the APBD: Pendapatan,
+ * Belanja, and Pembiayaan. Realisation is shown in the chart below, not
+ * on the cards, so the two readings stay distinct.
  */
 export function FiscalOverviewCards({ overview }: FiscalOverviewCardsProps) {
-  const surplus = overview.pendapatan.anggaran - overview.belanja.anggaran
-  const isSurplus = surplus >= 0
+  const cards = [
+    { label: 'Anggaran Pendapatan', value: overview.pendapatan.anggaran },
+    { label: 'Anggaran Belanja', value: overview.belanja.anggaran },
+    { label: 'Anggaran Pembiayaan', value: overview.pembiayaan.anggaran },
+  ]
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      <div className="rounded-card border border-fog bg-snow p-6">
-        <p className="text-sm text-steel">Anggaran Pendapatan</p>
-        <p className="mt-3 text-2xl font-bold tracking-tight tabular-nums text-obsidian">
-          {formatIDR(overview.pendapatan.anggaran)}
-        </p>
-      </div>
-      <div className="rounded-card border border-fog bg-snow p-6">
-        <p className="text-sm text-steel">Anggaran Belanja</p>
-        <p className="mt-3 text-2xl font-bold tracking-tight tabular-nums text-obsidian">
-          {formatIDR(overview.belanja.anggaran)}
-        </p>
-      </div>
-      <div className="rounded-card border border-fog bg-snow p-6">
-        <p className="text-sm text-steel">
-          {isSurplus ? 'Surplus Anggaran' : 'Defisit Anggaran'}
-        </p>
-        <p
-          className={`mt-3 text-2xl font-bold tracking-tight tabular-nums ${
-            isSurplus ? 'text-green-600' : 'text-red-600'
-          }`}
+      {cards.map((card) => (
+        <div
+          key={card.label}
+          className="rounded-card border border-fog bg-snow p-6"
         >
-          {formatIDR(Math.abs(surplus))}
-        </p>
-      </div>
+          <p className="text-sm text-steel">{card.label}</p>
+          <p className="mt-3 text-2xl font-bold tracking-tight tabular-nums text-obsidian">
+            {formatIDR(card.value)}
+          </p>
+        </div>
+      ))}
     </div>
   )
 }
