@@ -1,5 +1,6 @@
 import { formatIDR } from '@/shared/lib/format'
 
+import type { BudgetLineAggregate } from '../server/aggregations'
 import type { SubKegiatanDetailResult } from '../server/aggregate-sub-kegiatan'
 import { serapanColor } from './serapan-color'
 
@@ -8,20 +9,21 @@ interface SubKegiatanDetailProps {
 }
 
 /**
- * Rekening codes are dot-segmented (e.g. `5.1.02` → `5.1.02.01` →
- * `5.1.02.01.001`). Indent each row by its segment depth so the belanja
- * hierarchy is readable even though the rows are stored flat.
+ * A leaf rekening is one no other rekening nests under — i.e. no other
+ * code begins with `<kode>.`. Leaves are the most granular ("longest")
+ * belanja lines; the shorter parent codes are just rolled-up subtotals.
  */
-function rekeningIndent(kode: string): number {
-  const depth = kode.split('.').length
-  return Math.max(0, depth - 3) * 16
+function leafRekening(rekening: BudgetLineAggregate[]): BudgetLineAggregate[] {
+  return rekening.filter(
+    (line) => !rekening.some((other) => other.kode.startsWith(`${line.kode}.`)),
+  )
 }
 
 /**
  * Detail view for a single Sub Kegiatan: a header with its rolled-up
- * totals, then a table of the Rekening-level belanja lines beneath it.
- * The rekening table scrolls horizontally on narrow screens so it never
- * pushes the page wider than the viewport.
+ * totals, then a table of the leaf-level Rekening belanja lines — the
+ * most detailed entries, without the intermediate subtotal rows. The
+ * table scrolls horizontally on narrow screens.
  */
 export function SubKegiatanDetail({ detail }: SubKegiatanDetailProps) {
   const { subKegiatan, subBidang, rekening } = detail
@@ -33,6 +35,8 @@ export function SubKegiatanDetail({ detail }: SubKegiatanDetailProps) {
       </div>
     )
   }
+
+  const lines = leafRekening(rekening)
 
   return (
     <div className="space-y-6">
@@ -72,7 +76,7 @@ export function SubKegiatanDetail({ detail }: SubKegiatanDetailProps) {
         <h2 className="text-sm font-semibold tracking-tight text-obsidian">
           Rincian Belanja per Rekening
         </h2>
-        {rekening.length === 0 ? (
+        {lines.length === 0 ? (
           <p className="mt-4 text-sm text-steel">
             Tidak ada rincian belanja untuk Sub Kegiatan ini.
           </p>
@@ -94,14 +98,9 @@ export function SubKegiatanDetail({ detail }: SubKegiatanDetailProps) {
                 </tr>
               </thead>
               <tbody>
-                {rekening.map((line) => (
+                {lines.map((line) => (
                   <tr key={line.kode} className="border-b border-fog">
-                    <td
-                      className="py-1.5 pr-4 text-ink"
-                      style={{ paddingLeft: rekeningIndent(line.kode) }}
-                    >
-                      {line.uraian}
-                    </td>
+                    <td className="py-1.5 pr-4 text-ink">{line.uraian}</td>
                     <td className="py-1.5 pr-4 tabular-nums whitespace-nowrap text-ink">
                       {formatIDR(line.totalAnggaran)}
                     </td>
